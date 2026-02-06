@@ -1,11 +1,21 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Target, Shield, Layers, ShieldAlert, Sparkles, ChevronRight } from 'lucide-react';
+import {
+  Target, Shield, Layers, ShieldAlert, Sparkles, ChevronRight,
+  Flame, Zap, Users, Crosshair, Star, Trophy,
+} from 'lucide-react';
+import { SCENARIOS, getLevelForXP, ACHIEVEMENTS } from '../data/gtoData';
+import LevelBar from './LevelBar';
 
 const ICONS = {
   target: Target,
   shield: Shield,
   layers: Layers,
   'shield-alert': ShieldAlert,
+  flame: Flame,
+  zap: Zap,
+  users: Users,
+  crosshair: Crosshair,
 };
 
 const DIFFICULTY_COLORS = {
@@ -14,14 +24,28 @@ const DIFFICULTY_COLORS = {
   Advanced: 'text-red-400 bg-red-400/10 border-red-400/20',
 };
 
+function loadProgress() {
+  try {
+    const saved = localStorage.getItem('poker-genie-progress');
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return { xp: 0, totalHands: 0, totalCorrect: 0, bestStreak: 0, unlockedAchievements: [] };
+}
+
 export default function DrillSelector({ drills, onSelect }) {
+  const [progress, setProgress] = useState(loadProgress);
+  const levelInfo = getLevelForXP(progress.xp);
+  const accuracy = progress.totalHands > 0
+    ? Math.round((progress.totalCorrect / progress.totalHands) * 100)
+    : 0;
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen flex flex-col items-center p-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-12"
+        className="text-center mb-6 mt-4"
       >
         <div className="flex items-center justify-center gap-3 mb-4">
           <Sparkles className="text-gold" size={32} />
@@ -34,18 +58,58 @@ export default function DrillSelector({ drills, onSelect }) {
         </p>
       </motion.div>
 
+      {/* Level & Stats Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="w-full max-w-2xl mb-4"
+      >
+        <LevelBar levelInfo={levelInfo} />
+      </motion.div>
+
+      {/* Quick Stats */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.15 }}
+        className="flex items-center justify-center gap-6 mb-6 text-sm"
+      >
+        <div className="flex items-center gap-2">
+          <Target size={14} className="text-gray-400" />
+          <span className="text-gray-500">Hands:</span>
+          <span className="font-bold text-gray-300">{progress.totalHands}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Star size={14} className="text-green-400" />
+          <span className="text-gray-500">Accuracy:</span>
+          <span className="font-bold text-green-400">{accuracy}%</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Flame size={14} className="text-orange-400" />
+          <span className="text-gray-500">Best Streak:</span>
+          <span className="font-bold text-orange-400">{progress.bestStreak}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Trophy size={14} className="text-gold" />
+          <span className="text-gray-500">Trophies:</span>
+          <span className="font-bold text-gold">{progress.unlockedAchievements?.length || 0}/{ACHIEVEMENTS.length}</span>
+        </div>
+      </motion.div>
+
       {/* Drill Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
         {drills.map((drill, i) => {
           const Icon = ICONS[drill.icon] || Target;
           const diffClass = DIFFICULTY_COLORS[drill.difficulty] || DIFFICULTY_COLORS.Beginner;
+          const scenarioCount = (SCENARIOS[drill.id] || []).length;
 
           return (
             <motion.button
               key={drill.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08, type: 'spring', stiffness: 200 }}
+              transition={{ delay: i * 0.06, type: 'spring', stiffness: 200 }}
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => onSelect(drill.id)}
@@ -67,7 +131,7 @@ export default function DrillSelector({ drills, onSelect }) {
               </p>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-600">
-                  {drill.heroPosition} vs {drill.villainPosition} • {drill.potType}
+                  {drill.heroPosition} vs {drill.villainPosition} • {scenarioCount} hands
                 </span>
                 <ChevronRight size={16} className="text-gray-600 group-hover:text-gold group-hover:translate-x-1 transition-all" />
               </div>
@@ -81,7 +145,7 @@ export default function DrillSelector({ drills, onSelect }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
-        className="mt-12 text-xs text-gray-600 text-center"
+        className="mt-8 text-xs text-gray-600 text-center"
       >
         Strategies simplified to human-memorizable frequencies (0/25/50/75/100%)
       </motion.p>

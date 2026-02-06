@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, AlertTriangle, XCircle, Info, ArrowRight, BarChart3 } from 'lucide-react';
+import { CheckCircle, AlertTriangle, XCircle, Info, ArrowRight, BarChart3, Trophy } from 'lucide-react';
 import { LOGIC_TAGS, simplifyFrequency } from '../data/gtoData';
 
 const GRADE_ICONS = {
@@ -44,10 +44,10 @@ function FrequencyBar({ action, frequency, ev, isChosen, isBest }) {
   );
 }
 
-export default function StrategyFeedback({ feedback, onNext }) {
+export default function StrategyFeedback({ feedback, onNext, isLastHand }) {
   if (!feedback) return null;
 
-  const { chosenAction, bestAction, evLoss, classification, strategy } = feedback;
+  const { chosenAction, bestAction, evLoss, classification, strategy, score, xpGained, streakBonus } = feedback;
   const GradeIcon = GRADE_ICONS[classification.grade];
   const bgClass = GRADE_BG[classification.grade];
 
@@ -68,11 +68,16 @@ export default function StrategyFeedback({ feedback, onNext }) {
               <h3 className="text-xl font-bold" style={{ color: classification.color }}>
                 {classification.label}
               </h3>
-              <p className="text-sm text-gray-400">
-                EV Loss: <span className="font-mono font-semibold" style={{ color: classification.color }}>
+              <div className="flex items-center gap-3 text-sm text-gray-400">
+                <span>EV Loss: <span className="font-mono font-semibold" style={{ color: classification.color }}>
                   {evLoss.toFixed(2)} BB
-                </span>
-              </p>
+                </span></span>
+                {score !== undefined && (
+                  <span className="text-xs bg-white/10 px-2 py-0.5 rounded font-semibold">
+                    +{score} pts {xpGained > 0 && `• +${xpGained} XP`}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <motion.button
@@ -81,7 +86,7 @@ export default function StrategyFeedback({ feedback, onNext }) {
             onClick={onNext}
             className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors cursor-pointer"
           >
-            Next Hand <ArrowRight size={16} />
+            {isLastHand ? 'Finish Drill' : 'Next Hand'} {isLastHand ? <Trophy size={16} /> : <ArrowRight size={16} />}
           </motion.button>
         </div>
 
