@@ -3,13 +3,21 @@
 // Frequencies are "human-simplified" — rounded to nearest 25%.
 
 export const POSITIONS = {
-  BTN: 'Button',
-  SB: 'Small Blind',
-  BB: 'Big Blind',
-  CO: 'Cutoff',
-  HJ: 'Hijack',
-  LJ: 'Lojack',
+  UTG:    'Under the Gun',
+  'UTG+1':'UTG+1',
+  MP:     'Middle Position',
+  LJ:     'Lojack',
+  HJ:     'Hijack',
+  CO:     'Cutoff',
+  BTN:    'Button',
+  SB:     'Small Blind',
+  BB:     'Big Blind',
 };
+
+// Standard 9-max seat order, clockwise starting from the button.
+// Used to lay out seats around the oval table so the visual ordering
+// matches real poker action flow.
+export const SEAT_ORDER_9MAX = ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO'];
 
 export const SUITS = { s: 'spade', h: 'heart', d: 'diamond', c: 'club' };
 export const SUIT_SYMBOLS = { s: '♠', h: '♥', d: '♦', c: '♣' };
