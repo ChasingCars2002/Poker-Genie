@@ -1,35 +1,45 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import {
   SCENARIOS, EXPLOITS, calculateEVLoss, classifyEVLoss,
-  SCORE_CONFIG, getLevelForXP, ACHIEVEMENTS,
+  SCORE_CONFIG, getLevelForXP, ACHIEVEMENTS, pickScenarioWeighted,
 } from '../data/gtoData';
 
-const STORAGE_KEY = 'poker-genie-progress';
+const PROGRESS_KEY = 'poker-genie-progress';
+const LIFETIME_KEY = 'poker-genie-lifetime';
+const RECENT_BUFFER = 15;
+const COLD_START_HANDS = 20;
 
-function loadProgress() {
+function load(key, fallback) {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch {}
-  return {
-    xp: 0,
-    totalHands: 0,
-    totalCorrect: 0,
-    bestStreak: 0,
-    handsWithoutBlunder: 0,
-    perfectDrill: false,
-    drillsAttempted: 0,
-    drillsCompleted: {},
-    exploitWins: 0,
-    unlockedAchievements: [],
-  };
+    const raw = localStorage.getItem(key);
+    if (raw) return { ...fallback, ...JSON.parse(raw) };
+  } catch { /* noop */ }
+  return fallback;
 }
 
-function saveProgress(progress) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
-  } catch {}
+function save(key, data) {
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch { /* noop */ }
 }
+
+const defaultProgress = {
+  xp: 0,
+  totalHands: 0,
+  totalCorrect: 0,
+  bestStreak: 0,
+  handsWithoutBlunder: 0,
+  exploitWins: 0,
+  unlockedAchievements: [],
+};
+
+const defaultLifetime = {
+  totalHands: 0,
+  totalScore: 0,
+  lifetimeAvgScore: 0,
+  bestHandScore: 0,
+  bestSessionAvg: 0,
+  dailyStreak: 0,
+  lastPlayedDate: null,
+};
 
 const initialSessionStats = {
   handsPlayed: 0,
@@ -44,24 +54,47 @@ const initialSessionStats = {
   results: [],
 };
 
-export function useTrainer(drillId) {
-  const scenarios = useMemo(() => {
-    const base = SCENARIOS[drillId] || [];
-    // Shuffle for variety
-    return [...base].sort(() => Math.random() - 0.5);
-  }, [drillId]);
+function daysBetween(prevStr, todayStr) {
+  if (!prevStr) return Infinity;
+  const prev = new Date(prevStr);
+  const today = new Date(todayStr);
+  const ms = today.getTime() - prev.getTime();
+  return Math.round(ms / 86400000);
+}
 
-  const [currentIndex, setCurrentIndex] = useState(0);
+function updateDailyStreak(lifetime) {
+  const today = new Date().toDateString();
+  if (lifetime.lastPlayedDate === today) return lifetime;
+  const diff = daysBetween(lifetime.lastPlayedDate, today);
+  const nextStreak = diff === 1 ? (lifetime.dailyStreak || 0) + 1 : 1;
+  return { ...lifetime, dailyStreak: nextStreak, lastPlayedDate: today };
+}
+
+export function useTrainer() {
+  const POOL = useMemo(() => {
+    const all = Object.values(SCENARIOS).flat();
+    // Ensure every scenario has a difficulty field
+    return all.map(s => s.difficulty ? s : { ...s, difficulty: 'medium' });
+  }, []);
+
+  const [progress, setProgress] = useState(() => load(PROGRESS_KEY, defaultProgress));
+  const [lifetime, setLifetime] = useState(() => {
+    const loaded = load(LIFETIME_KEY, defaultLifetime);
+    const updated = updateDailyStreak(loaded);
+    if (updated !== loaded) save(LIFETIME_KEY, updated);
+    return updated;
+  });
   const [stats, setStats] = useState(initialSessionStats);
+  const recentRef = useRef([]);
+
+  const [currentScenario, setCurrentScenario] = useState(() =>
+    pickScenarioWeighted(POOL, [], lifetime.totalHands >= COLD_START_HANDS ? lifetime.lifetimeAvgScore : 50)
+  );
   const [feedback, setFeedback] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [exploit, setExploit] = useState(null);
-  const [progress, setProgress] = useState(loadProgress);
   const [newAchievements, setNewAchievements] = useState([]);
-  const [drillComplete, setDrillComplete] = useState(false);
   const [scorePopup, setScorePopup] = useState(null);
-
-  const currentScenario = scenarios[currentIndex] || null;
 
   const activeStrategy = useMemo(() => {
     if (!currentScenario) return null;
@@ -71,24 +104,16 @@ export function useTrainer(drillId) {
   }, [currentScenario, exploit]);
 
   const levelInfo = useMemo(() => getLevelForXP(progress.xp), [progress.xp]);
+  const sessionAvg = stats.handsPlayed > 0 ? stats.totalScore / stats.handsPlayed : 0;
 
-  // Check achievements after progress changes
-  useEffect(() => {
-    const newlyUnlocked = ACHIEVEMENTS.filter(
-      a => !progress.unlockedAchievements.includes(a.id) && a.check(progress)
+  // Checks for newly-unlocked achievements against a combined state snapshot.
+  // Returns the new IDs (caller merges them into progress.unlockedAchievements).
+  const detectAchievements = (nextProgress, nextLifetime) => {
+    const combined = { ...nextProgress, ...nextLifetime };
+    return ACHIEVEMENTS.filter(
+      a => !nextProgress.unlockedAchievements.includes(a.id) && a.check(combined)
     );
-    if (newlyUnlocked.length > 0) {
-      setNewAchievements(prev => [...prev, ...newlyUnlocked]);
-      setProgress(prev => {
-        const updated = {
-          ...prev,
-          unlockedAchievements: [...prev.unlockedAchievements, ...newlyUnlocked.map(a => a.id)],
-        };
-        saveProgress(updated);
-        return updated;
-      });
-    }
-  }, [progress.totalHands, progress.bestStreak, progress.handsWithoutBlunder, progress.exploitWins]);
+  };
 
   const handleAction = useCallback((chosenAction) => {
     if (!activeStrategy || showFeedback) return;
@@ -96,12 +121,13 @@ export function useTrainer(drillId) {
     const evLoss = calculateEVLoss(activeStrategy, chosenAction);
     const classification = classifyEVLoss(evLoss);
     const chosenActionData = activeStrategy.actions.find(a => a.action === chosenAction);
-    const bestActionData = activeStrategy.actions.reduce((best, a) => a.ev > best.ev ? a : best, activeStrategy.actions[0]);
+    const bestActionData = activeStrategy.actions.reduce(
+      (best, a) => a.ev > best.ev ? a : best, activeStrategy.actions[0]
+    );
 
     const isCorrect = classification.grade === 'perfect' || classification.grade === 'acceptable';
     const scoreData = SCORE_CONFIG[classification.grade];
 
-    // Calculate streak bonus
     const newStreak = isCorrect ? stats.currentStreak + 1 : 0;
     const streakMultiplier = Math.min(newStreak, SCORE_CONFIG.maxStreakMultiplier);
     const streakXP = isCorrect ? streakMultiplier * SCORE_CONFIG.streakBonus : 0;
@@ -125,77 +151,94 @@ export function useTrainer(drillId) {
     setFeedback(result);
     setShowFeedback(true);
     setScorePopup({ points: scoreData.points, xp: totalXP, grade: classification.grade, streak: newStreak });
-
-    // Clear score popup after animation
     setTimeout(() => setScorePopup(null), 2000);
 
-    setStats(prev => {
-      const newResults = [...prev.results, result];
-      return {
-        handsPlayed: prev.handsPlayed + 1,
-        perfectPlays: prev.perfectPlays + (isCorrect ? 1 : 0),
-        inaccuracies: prev.inaccuracies + (classification.grade === 'inaccuracy' ? 1 : 0),
-        blunders: prev.blunders + (classification.grade === 'blunder' ? 1 : 0),
-        totalEVLoss: Math.round((prev.totalEVLoss + evLoss) * 100) / 100,
-        totalScore: prev.totalScore + scoreData.points,
-        currentStreak: newStreak,
-        bestSessionStreak: Math.max(prev.bestSessionStreak, newStreak),
-        xpEarned: prev.xpEarned + totalXP,
-        results: newResults,
-      };
-    });
+    setStats(prev => ({
+      handsPlayed: prev.handsPlayed + 1,
+      perfectPlays: prev.perfectPlays + (isCorrect ? 1 : 0),
+      inaccuracies: prev.inaccuracies + (classification.grade === 'inaccuracy' ? 1 : 0),
+      blunders: prev.blunders + (classification.grade === 'blunder' ? 1 : 0),
+      totalEVLoss: Math.round((prev.totalEVLoss + evLoss) * 100) / 100,
+      totalScore: prev.totalScore + scoreData.points,
+      currentStreak: newStreak,
+      bestSessionStreak: Math.max(prev.bestSessionStreak, newStreak),
+      xpEarned: prev.xpEarned + totalXP,
+      results: [...prev.results, result],
+    }));
 
-    // Update persistent progress
-    setProgress(prev => {
-      const updated = {
-        ...prev,
-        xp: prev.xp + totalXP,
-        totalHands: prev.totalHands + 1,
-        totalCorrect: prev.totalCorrect + (isCorrect ? 1 : 0),
-        bestStreak: Math.max(prev.bestStreak, newStreak),
-        handsWithoutBlunder: classification.grade === 'blunder' ? 0 : prev.handsWithoutBlunder + 1,
-        exploitWins: prev.exploitWins + (exploit && isCorrect ? 1 : 0),
+    const nextLifetime = (() => {
+      const totalHands = lifetime.totalHands + 1;
+      const totalScore = lifetime.totalScore + scoreData.points;
+      const lifetimeAvgScore = totalScore / totalHands;
+      const newSessionAvg = (stats.totalScore + scoreData.points) / (stats.handsPlayed + 1);
+      return {
+        ...lifetime,
+        totalHands,
+        totalScore,
+        lifetimeAvgScore,
+        bestHandScore: Math.max(lifetime.bestHandScore, scoreData.points),
+        bestSessionAvg: Math.max(lifetime.bestSessionAvg, newSessionAvg),
       };
-      // Track which drills have been attempted
-      if (!prev.drillsCompleted[drillId]) {
-        updated.drillsAttempted = prev.drillsAttempted + 1;
-        updated.drillsCompleted = { ...prev.drillsCompleted, [drillId]: true };
-      }
-      saveProgress(updated);
-      return updated;
-    });
-  }, [activeStrategy, showFeedback, currentScenario, stats.currentStreak, exploit, drillId]);
+    })();
+
+    const baseProgress = {
+      ...progress,
+      xp: progress.xp + totalXP,
+      totalHands: progress.totalHands + 1,
+      totalCorrect: progress.totalCorrect + (isCorrect ? 1 : 0),
+      bestStreak: Math.max(progress.bestStreak, newStreak),
+      handsWithoutBlunder: classification.grade === 'blunder' ? 0 : progress.handsWithoutBlunder + 1,
+      exploitWins: progress.exploitWins + (exploit && isCorrect ? 1 : 0),
+    };
+
+    const unlocked = detectAchievements(baseProgress, nextLifetime);
+    const nextProgress = unlocked.length
+      ? { ...baseProgress, unlockedAchievements: [...baseProgress.unlockedAchievements, ...unlocked.map(a => a.id)] }
+      : baseProgress;
+
+    save(PROGRESS_KEY, nextProgress);
+    save(LIFETIME_KEY, nextLifetime);
+    setProgress(nextProgress);
+    setLifetime(nextLifetime);
+    if (unlocked.length) setNewAchievements(prev => [...prev, ...unlocked]);
+  }, [activeStrategy, showFeedback, currentScenario, stats.currentStreak, stats.totalScore, stats.handsPlayed, exploit, progress, lifetime]);
 
   const nextHand = useCallback(() => {
-    const nextIdx = currentIndex + 1;
-    if (nextIdx >= scenarios.length) {
-      // Check for perfect drill
-      const allCorrect = stats.results.every(r =>
-        r.classification.grade === 'perfect' || r.classification.grade === 'acceptable'
-      );
-      if (allCorrect && stats.handsPlayed >= scenarios.length) {
-        setProgress(prev => {
-          const updated = { ...prev, perfectDrill: true };
-          saveProgress(updated);
-          return updated;
-        });
-      }
-      setDrillComplete(true);
-    } else {
-      setShowFeedback(false);
-      setFeedback(null);
-      setCurrentIndex(nextIdx);
+    if (currentScenario) {
+      recentRef.current = [...recentRef.current, currentScenario.id].slice(-RECENT_BUFFER);
     }
-  }, [currentIndex, scenarios.length, stats]);
+    const avgForWeighting = lifetime.totalHands >= COLD_START_HANDS ? lifetime.lifetimeAvgScore : 50;
+    const next = pickScenarioWeighted(POOL, recentRef.current, avgForWeighting);
+    setCurrentScenario(next);
+    setFeedback(null);
+    setShowFeedback(false);
+  }, [POOL, currentScenario, lifetime.totalHands, lifetime.lifetimeAvgScore]);
 
-  const resetDrill = useCallback(() => {
-    const shuffled = [...(SCENARIOS[drillId] || [])].sort(() => Math.random() - 0.5);
-    setCurrentIndex(0);
+  const resetSession = useCallback(() => {
     setStats(initialSessionStats);
     setFeedback(null);
     setShowFeedback(false);
-    setDrillComplete(false);
-  }, [drillId]);
+    recentRef.current = [];
+    const avgForWeighting = lifetime.totalHands >= COLD_START_HANDS ? lifetime.lifetimeAvgScore : 50;
+    setCurrentScenario(pickScenarioWeighted(POOL, [], avgForWeighting));
+  }, [POOL, lifetime.totalHands, lifetime.lifetimeAvgScore]);
+
+  const resetAllProgress = useCallback(() => {
+    try {
+      localStorage.removeItem(PROGRESS_KEY);
+      localStorage.removeItem(LIFETIME_KEY);
+    } catch { /* noop */ }
+    setProgress(defaultProgress);
+    const freshLifetime = updateDailyStreak(defaultLifetime);
+    save(LIFETIME_KEY, freshLifetime);
+    setLifetime(freshLifetime);
+    setStats(initialSessionStats);
+    setFeedback(null);
+    setShowFeedback(false);
+    recentRef.current = [];
+    setCurrentScenario(pickScenarioWeighted(POOL, [], 50));
+    setNewAchievements([]);
+  }, [POOL]);
 
   const toggleExploit = useCallback((exploitId) => {
     setExploit(prev => prev === exploitId ? null : exploitId);
@@ -211,18 +254,18 @@ export function useTrainer(drillId) {
     feedback,
     showFeedback,
     stats,
+    sessionAvg,
     progress,
+    lifetime,
     levelInfo,
     exploit,
-    drillComplete,
     scorePopup,
     newAchievements,
     handleAction,
     nextHand,
-    resetDrill,
+    resetSession,
+    resetAllProgress,
     toggleExploit,
     dismissAchievement,
-    scenarioCount: scenarios.length,
-    currentIndex,
   };
 }

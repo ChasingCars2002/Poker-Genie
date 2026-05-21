@@ -7,6 +7,7 @@ export default function Card({ card, faceDown = false, size = 'md', delay = 0 })
   const symbol = SUIT_SYMBOLS[suit];
 
   const sizes = {
+    xs: 'w-6 h-9 text-[0.65rem]',
     sm: 'w-10 h-14 text-sm',
     md: 'w-14 h-20 text-lg',
     lg: 'w-18 h-26 text-2xl',
