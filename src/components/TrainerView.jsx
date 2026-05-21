@@ -1,5 +1,6 @@
-import { motion } from 'framer-motion';
-import { ArrowLeft, RotateCcw, Flame } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Flame, Settings, RotateCcw, Trash2 } from 'lucide-react';
 import TableView from './TableView';
 import StrategyFeedback from './StrategyFeedback';
 import StatsBar from './StatsBar';
@@ -7,116 +8,198 @@ import ExploitToggle from './ExploitToggle';
 import LevelBar from './LevelBar';
 import ScorePopup from './ScorePopup';
 import AchievementToast from './AchievementToast';
-import SessionSummary from './SessionSummary';
 import { useTrainer } from '../hooks/useTrainer';
-import { DRILLS } from '../data/gtoData';
+import { getAvgTier, exploitApplies, EXPLOITS } from '../data/gtoData';
 
-export default function TrainerView({ drillId, onBack }) {
-  const drill = DRILLS.find(d => d.id === drillId);
+function HeroMetric({ label, value, color = 'text-white', flame = false, animateKey = null }) {
+  return (
+    <div className="flex flex-col items-center min-w-[60px]">
+      <span className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">{label}</span>
+      <div className={`flex items-center gap-1 text-2xl font-extrabold ${color}`}>
+        {flame && <Flame size={18} className="text-orange-400" />}
+        <AnimatePresence mode="popLayout">
+          <motion.span
+            key={animateKey ?? value}
+            initial={{ y: -10, opacity: 0, scale: 0.8 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 10, opacity: 0, scale: 0.8 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+          >
+            {value}
+          </motion.span>
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+export default function TrainerView() {
   const {
     currentScenario,
     activeStrategy,
     feedback,
     showFeedback,
     stats,
+    sessionAvg,
+    lifetime,
     levelInfo,
     exploit,
-    drillComplete,
     scorePopup,
     newAchievements,
     handleAction,
     nextHand,
-    resetDrill,
+    resetSession,
+    resetAllProgress,
     toggleExploit,
     dismissAchievement,
-    scenarioCount,
-    currentIndex,
-  } = useTrainer(drillId);
+  } = useTrainer();
 
-  // Session Summary screen
-  if (drillComplete) {
-    return (
-      <SessionSummary
-        stats={stats}
-        drillName={drill?.name || 'Drill'}
-        onReplay={resetDrill}
-        onBack={onBack}
-      />
-    );
-  }
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [menuOpen]);
+
+  // Keyboard: Space/Enter advances; in TrainerView for global feel.
+  // Per-button shortcuts (F/C/B/R/S) are handled inside ActionBar.
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        if (showFeedback) {
+          e.preventDefault();
+          nextHand();
+        }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showFeedback, nextHand]);
+
+  const avgDisplay = lifetime.totalHands > 0 ? Math.round(lifetime.lifetimeAvgScore) : 0;
+  const tier = getAvgTier(avgDisplay);
+  const sessionAvgDisplay = stats.handsPlayed > 0 ? Math.round(sessionAvg) : 0;
+
+  const exploitVisible = activeStrategy && Object.values(EXPLOITS).some(e => exploitApplies(e.id, activeStrategy));
 
   return (
     <div className="min-h-screen flex flex-col p-4 sm:p-6 max-w-3xl mx-auto">
-      {/* Score Popup */}
       <ScorePopup data={scorePopup} />
-
-      {/* Achievement Toast */}
       <AchievementToast
         achievement={newAchievements[0] || null}
         onDismiss={dismissAchievement}
       />
 
-      {/* Top bar */}
-      <div className="flex items-center justify-between mb-3">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onBack}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm cursor-pointer"
-        >
-          <ArrowLeft size={16} />
-          Back
-        </motion.button>
-        <div className="text-center">
-          <h2 className="text-lg font-bold text-white">{drill?.name}</h2>
-          <p className="text-xs text-gray-500">
-            Hand {currentIndex + 1} / {scenarioCount}
-          </p>
+      {/* Hero metrics header */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex flex-col">
+          <div className="flex items-baseline gap-2">
+            <AnimatePresence mode="popLayout">
+              <motion.span
+                key={avgDisplay}
+                initial={{ y: -16, opacity: 0, scale: 0.7 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: 16, opacity: 0, scale: 0.7 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 22 }}
+                className="text-5xl font-black tabular-nums leading-none"
+                style={{ color: tier.color }}
+              >
+                {avgDisplay}
+              </motion.span>
+            </AnimatePresence>
+            <span className="text-xs uppercase tracking-widest text-gray-500 font-semibold">avg</span>
+          </div>
+          <span className="text-xs font-semibold mt-1" style={{ color: tier.color }}>
+            {tier.label}
+            <span className="text-gray-500 font-normal"> · {lifetime.totalHands.toLocaleString()} hands all-time</span>
+          </span>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={resetDrill}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm cursor-pointer"
-        >
-          <RotateCcw size={14} />
-          Reset
-        </motion.button>
+
+        <div className="flex items-center gap-5">
+          <HeroMetric label="Session" value={sessionAvgDisplay} color="text-gold" animateKey={sessionAvgDisplay} />
+          <HeroMetric label="Hands" value={stats.handsPlayed} color="text-blue-300" animateKey={stats.handsPlayed} />
+          <HeroMetric
+            label="Streak"
+            value={stats.currentStreak}
+            color={stats.currentStreak >= 3 ? 'text-orange-400' : 'text-gray-300'}
+            flame={stats.currentStreak >= 3}
+            animateKey={stats.currentStreak}
+          />
+          <HeroMetric
+            label="Daily"
+            value={lifetime.dailyStreak || 0}
+            color="text-orange-400"
+            flame
+            animateKey={lifetime.dailyStreak}
+          />
+
+          {/* Settings */}
+          <div className="relative" ref={menuRef}>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setMenuOpen(v => !v)}
+              className="text-gray-400 hover:text-white p-2 cursor-pointer"
+              aria-label="Settings"
+            >
+              <Settings size={18} />
+            </motion.button>
+            <AnimatePresence>
+              {menuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                  transition={{ duration: 0.12 }}
+                  className="absolute right-0 top-10 z-30 bg-surface-800 border border-white/10 rounded-xl shadow-2xl py-1 w-52"
+                >
+                  <button
+                    onClick={() => { resetSession(); setMenuOpen(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-white/10 cursor-pointer"
+                  >
+                    <RotateCcw size={14} /> Reset session
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm('Wipe ALL progress (XP, lifetime average, achievements)? This cannot be undone.')) {
+                        resetAllProgress();
+                        setMenuOpen(false);
+                      }
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-white/10 cursor-pointer"
+                  >
+                    <Trash2 size={14} /> Wipe all progress
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
 
-      {/* Level Bar */}
+      {/* Level bar */}
       <div className="mb-3">
         <LevelBar levelInfo={levelInfo} />
       </div>
 
-      {/* Score + Streak */}
-      <div className="flex items-center justify-between mb-3 px-1">
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-bold text-gold">Score: {stats.totalScore}</span>
-          {stats.currentStreak >= 2 && (
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="flex items-center gap-1 text-sm font-bold text-orange-400"
-            >
-              <Flame size={14} /> {stats.currentStreak}x Streak
-            </motion.span>
-          )}
-        </div>
-        <span className="text-xs text-gray-500">+{stats.xpEarned} XP this session</span>
-      </div>
-
-      {/* Stats */}
+      {/* Session stats strip */}
       <div className="mb-4">
         <StatsBar stats={stats} />
       </div>
 
-      {/* Exploit Toggle */}
-      <div className="mb-4">
-        <ExploitToggle activeExploit={exploit} onToggle={toggleExploit} />
-      </div>
+      {/* Exploit toggle — hidden when no exploits apply to current scenario */}
+      {exploitVisible && (
+        <div className="mb-4">
+          <ExploitToggle activeExploit={exploit} onToggle={toggleExploit} />
+        </div>
+      )}
 
-      {/* Table */}
+      {/* Table + actions */}
       <div className="mb-6">
         <TableView
           scenario={currentScenario}
@@ -129,7 +212,7 @@ export default function TrainerView({ drillId, onBack }) {
       {/* Feedback */}
       {showFeedback && (
         <div className="mb-6">
-          <StrategyFeedback feedback={feedback} onNext={nextHand} isLastHand={currentIndex + 1 >= scenarioCount} />
+          <StrategyFeedback feedback={feedback} onNext={nextHand} isLastHand={false} />
         </div>
       )}
     </div>
