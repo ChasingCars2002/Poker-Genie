@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Target, AlertTriangle, XCircle, TrendingDown } from 'lucide-react';
 
 export default function StatsBar({ stats }) {
@@ -15,11 +14,7 @@ export default function StatsBar({ stats }) {
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 py-3 px-4 bg-surface-800/50 backdrop-blur-sm rounded-xl border border-white/5"
-    >
+    <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 py-3 px-4 bg-surface-800/50 backdrop-blur-sm rounded-xl border border-white/5">
       {items.map(({ label, value, icon: Icon, color }) => (
         <div key={label} className="flex items-center gap-2">
           <Icon size={14} className={color} />
@@ -27,6 +22,6 @@ export default function StatsBar({ stats }) {
           <span className={`text-sm font-semibold ${color}`}>{value}</span>
         </div>
       ))}
-    </motion.div>
+    </div>
   );
 }
