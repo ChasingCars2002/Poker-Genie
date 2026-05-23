@@ -1136,6 +1136,49 @@ export function simplifyFrequency(freq) {
   return Math.round(freq / 25) * 25;
 }
 
+export function ensureFourActions(strategy) {
+  if (!strategy || !strategy.actions) return strategy;
+  if (strategy.actions.some(a => a.action === 'bet66')) return strategy;
+
+  const bet33 = strategy.actions.find(a => a.action === 'bet33');
+  const bet75 = strategy.actions.find(a => a.action === 'bet75');
+  if (!bet33 || !bet75) return strategy;
+
+  const potSize = bet33.size ? bet33.size / 0.33 : 6.5;
+  const bet66Size = Math.round(potSize * 0.66 * 100) / 100;
+  const bet66EV = Math.round(((bet33.ev + bet75.ev) / 2) * 100) / 100;
+
+  const totalBetFreq = bet33.frequency + bet75.frequency;
+  const bet33NewFreq = simplifyFrequency(totalBetFreq * 0.4);
+  const bet66Freq = simplifyFrequency(totalBetFreq * 0.3);
+  const bet75NewFreq = simplifyFrequency(totalBetFreq * 0.3);
+
+  const actions = strategy.actions.map(a => {
+    if (a.action === 'bet33') return { ...a, frequency: bet33NewFreq };
+    if (a.action === 'bet75') return { ...a, frequency: bet75NewFreq };
+    return a;
+  });
+
+  const bet66Action = {
+    action: 'bet66',
+    label: 'Bet 66%',
+    frequency: bet66Freq,
+    ev: bet66EV,
+    size: bet66Size,
+  };
+
+  const bet75Idx = actions.findIndex(a => a.action === 'bet75');
+  actions.splice(bet75Idx, 0, bet66Action);
+
+  const total = actions.reduce((s, a) => s + a.frequency, 0);
+  if (total !== 100) {
+    const best = actions.reduce((b, a) => a.frequency > b.frequency ? a : b, actions[0]);
+    best.frequency = Math.max(0, best.frequency + (100 - total));
+  }
+
+  return { ...strategy, actions };
+}
+
 // ── Scoring System ──
 
 export const SCORE_CONFIG = {

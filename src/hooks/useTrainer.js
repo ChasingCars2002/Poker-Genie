@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   SCENARIOS, EXPLOITS, calculateEVLoss, classifyEVLoss,
-  SCORE_CONFIG, getLevelForXP, ACHIEVEMENTS,
+  SCORE_CONFIG, getLevelForXP, ACHIEVEMENTS, ensureFourActions,
 } from '../data/gtoData';
 
 const STORAGE_KEY = 'poker-genie-progress';
@@ -65,7 +65,7 @@ export function useTrainer(drillId) {
 
   const activeStrategy = useMemo(() => {
     if (!currentScenario) return null;
-    const base = currentScenario.gtoStrategy;
+    const base = ensureFourActions(currentScenario.gtoStrategy);
     if (exploit && EXPLOITS[exploit]) return EXPLOITS[exploit].adjust(base);
     return base;
   }, [currentScenario, exploit]);

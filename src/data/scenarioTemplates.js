@@ -1,6 +1,7 @@
 // Scenario templates encoding GTO strategy shapes.
-// Each template defines a strategic skeleton — the generator randomizes concrete cards within constraints.
-// difficultyBase 1-3 = easy (obvious best action), 4-6 = medium, 7-10 = hard (close EV decisions).
+// Every template has 4 actions: check, bet33, bet66, bet75.
+// All spots are designed to be genuinely difficult — close EV decisions with mixed strategies.
+// difficultyBase 4-6 = medium (close decisions), 7-10 = hard (razor thin, solver-level).
 
 export const POSITION_MATCHUPS = {
   IP_VS_BB: { hero: 'BTN', villain: 'BB', label: 'IP vs BB' },
@@ -14,274 +15,269 @@ export const POSITION_MATCHUPS = {
 export const SCENARIO_TEMPLATES = [
 
   // ════════════════════════════════════════════════════
-  //  FLOP — IP VALUE BETTING
+  //  FLOP — IP SPOTS (Mixed Strategies)
   // ════════════════════════════════════════════════════
 
   {
-    id: 'ip-tptk-dry-flop',
+    id: 'ip-tptk-dry-sizing',
     street: 'flop',
     position: 'IP_VS_BB',
     boardTextureType: 'dry-high',
     handCategoryType: 'top-pair-top-kicker',
-    difficultyBase: 1,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [0, 0], evOffset: [-0.8, -0.4] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [75, 100], evOffset: [0, 0.3], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.3, 0], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['RANGE_ADVANTAGE', 'NUT_ADVANTAGE', 'THIN_VALUE'],
-    explanationTemplate: '{hand} on {board} is a premium top pair. Small c-bet is preferred to keep villain\'s calling range wide while building the pot.',
-    modifiers: [
-      { condition: 'hasBackdoorFlushDraw', freqAdjust: { bet33: 0 }, evAdjust: { bet33: 0.05 } },
-    ],
-  },
-  {
-    id: 'ip-overpair-dry-flop',
-    street: 'flop',
-    position: 'IP_VS_BB',
-    boardTextureType: 'dry-low',
-    handCategoryType: 'overpair',
-    difficultyBase: 1,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [0, 0], evOffset: [-0.6, -0.3] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [75, 100], evOffset: [0, 0.2], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.2, 0.1], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['RANGE_ADVANTAGE', 'NUT_ADVANTAGE', 'EQUITY_DENIAL'],
-    explanationTemplate: '{hand} is an overpair on {board}. We have a clear value hand that should bet for protection and value. Small sizing is efficient on dry textures.',
-    modifiers: [],
-  },
-  {
-    id: 'ip-set-dry-flop',
-    street: 'flop',
-    position: 'IP_VS_BB',
-    boardTextureType: 'dry-high',
-    handCategoryType: 'set',
-    difficultyBase: 2,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [-0.3, 0], sizeMultiplier: 0 },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [0, 0.2], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [25, 50], evOffset: [-0.1, 0.2], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['NUT_ADVANTAGE', 'BOARD_COVERAGE'],
-    explanationTemplate: '{hand} flopped a set on {board}. With a monster hand on a dry board, we can mix between trapping and building the pot. All actions are close in EV.',
-    modifiers: [],
-  },
-  {
-    id: 'ip-tptk-wet-flop',
-    street: 'flop',
-    position: 'IP_VS_BB',
-    boardTextureType: 'wet',
-    handCategoryType: 'top-pair-top-kicker',
-    difficultyBase: 3,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [0, 0], evOffset: [-1.0, -0.5] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.2, 0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [50, 75], evOffset: [0, 0.3], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['EQUITY_DENIAL', 'DRAW_HEAVY', 'NUT_ADVANTAGE'],
-    explanationTemplate: '{hand} on {board} needs to protect against draws. Larger sizing is preferred on wet boards to deny equity and charge draws.',
-    modifiers: [
-      { condition: 'boardHasFlushDraw', freqAdjust: { bet75: 10 }, evAdjust: { bet75: 0.1 } },
-    ],
-  },
-  {
-    id: 'ip-twopair-wet-flop',
-    street: 'flop',
-    position: 'IP_VS_BB',
-    boardTextureType: 'wet',
-    handCategoryType: 'two-pair',
-    difficultyBase: 3,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [0, 25], evOffset: [-0.4, -0.1] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.2, 0], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [50, 75], evOffset: [0, 0.3], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['NUT_ADVANTAGE', 'EQUITY_DENIAL', 'DRAW_HEAVY'],
-    explanationTemplate: '{hand} flopped two pair on {board}. Strong hand but vulnerable to draws. Bet large to deny equity and build a big pot.',
-    modifiers: [],
-  },
-
-  // ════════════════════════════════════════════════════
-  //  FLOP — IP BLUFFING
-  // ════════════════════════════════════════════════════
-
-  {
-    id: 'ip-air-dry-flop',
-    street: 'flop',
-    position: 'IP_VS_BB',
-    boardTextureType: 'dry-high',
-    handCategoryType: 'air',
-    difficultyBase: 2,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [50, 75], evOffset: [0, 0.1] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.1, 0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.8, -0.4], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['BLUFF_CANDIDATE', 'RANGE_ADVANTAGE', 'BOARD_COVERAGE'],
-    explanationTemplate: '{hand} missed the {board} completely. On a dry board, checking back is usually best — our hand has some showdown value or can improve. Small c-bet is an option as a range bet.',
-    modifiers: [
-      { condition: 'hasBackdoorFlushDraw', freqAdjust: { bet33: 10 }, evAdjust: { bet33: 0.1 } },
-    ],
-  },
-  {
-    id: 'ip-flushdraw-wet-flop',
-    street: 'flop',
-    position: 'IP_VS_BB',
-    boardTextureType: 'wet',
-    handCategoryType: 'flush-draw',
-    difficultyBase: 3,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [-0.3, 0] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.1, 0.2], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.2, 0.1], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['BLUFF_CANDIDATE', 'DRAW_HEAVY', 'EQUITY_DENIAL'],
-    explanationTemplate: '{hand} has a flush draw on {board}. Semi-bluffing is a good option — we have strong equity when called and fold equity when betting.',
-    modifiers: [],
-  },
-  {
-    id: 'ip-gutshot-dry-flop',
-    street: 'flop',
-    position: 'IP_VS_BB',
-    boardTextureType: 'dry-high',
-    handCategoryType: 'gutshot',
-    difficultyBase: 4,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [50, 75], evOffset: [0, 0.1] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.1, 0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.6, -0.3], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['BLUFF_CANDIDATE', 'POT_CONTROL'],
-    explanationTemplate: '{hand} has a gutshot on {board}. Mixed between checking (to realize equity cheaply) and small c-betting (as a range bet with some back-door potential).',
-    modifiers: [],
-  },
-  {
-    id: 'ip-overcards-dry-flop',
-    street: 'flop',
-    position: 'IP_VS_BB',
-    boardTextureType: 'dry-low',
-    handCategoryType: 'overcards',
-    difficultyBase: 3,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [-0.2, 0] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [50, 75], evOffset: [0, 0.2], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.5, -0.2], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['RANGE_ADVANTAGE', 'EQUITY_DENIAL', 'BOARD_COVERAGE'],
-    explanationTemplate: '{hand} has overcards on {board}. On a low board, BTN has a significant range advantage. Small c-bet denies equity and leverages positional advantage.',
-    modifiers: [],
-  },
-
-  // ════════════════════════════════════════════════════
-  //  FLOP — OOP PLAY
-  // ════════════════════════════════════════════════════
-
-  {
-    id: 'oop-tptk-dry-flop',
-    street: 'flop',
-    position: 'OOP_VS_IP',
-    boardTextureType: 'dry-high',
-    handCategoryType: 'top-pair-top-kicker',
-    difficultyBase: 4,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [50, 75], evOffset: [0, 0.1] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.1, 0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.5, -0.2], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['RANGE_DISADVANTAGE', 'POT_CONTROL', 'CHECK_RAISE_CANDIDATE'],
-    explanationTemplate: '{hand} on {board} from OOP. Despite having top pair, BB has a range disadvantage on high boards. Checking to the raiser is standard — we can check-call or check-raise.',
-    modifiers: [],
-  },
-  {
-    id: 'oop-set-check-raise',
-    street: 'flop',
-    position: 'OOP_VS_IP',
-    boardTextureType: 'dry-high',
-    handCategoryType: 'set',
-    difficultyBase: 3,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [75, 100], evOffset: [0, 0.2] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.3, -0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.5, -0.2], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['CHECK_RAISE_CANDIDATE', 'NUT_ADVANTAGE'],
-    explanationTemplate: '{hand} flopped a set on {board} from OOP. Checking is optimal to trap — we expect IP to c-bet frequently, setting up a profitable check-raise.',
-    modifiers: [],
-  },
-  {
-    id: 'oop-flushdraw-wet',
-    street: 'flop',
-    position: 'OOP_VS_IP',
-    boardTextureType: 'wet',
-    handCategoryType: 'flush-draw',
     difficultyBase: 5,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [50, 75], evOffset: [0, 0.1] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.1, 0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.4, -0.1], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [0, 25], evOffset: [-0.15, -0.05] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [0, 0.1], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [25, 50], evOffset: [-0.02, 0.08], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.08, 0.02], sizeMultiplier: 0.75 },
       ],
     },
-    logicTagPool: ['DRAW_HEAVY', 'CHECK_RAISE_CANDIDATE', 'BLUFF_CANDIDATE'],
-    explanationTemplate: '{hand} has a flush draw on {board} from OOP. Checking is preferred to set up a check-raise semi-bluff. Donking small is occasionally mixed in.',
-    modifiers: [],
+    logicTagPool: ['RANGE_ADVANTAGE', 'NUT_ADVANTAGE', 'THIN_VALUE'],
+    explanationTemplate: '{hand} on {board} — strong top pair but sizing matters. Small bet keeps villain\'s range wide; larger sizing polarizes but can fold out worse. Close between 33% and 66%.',
+    modifiers: [
+      { condition: 'hasBackdoorFlushDraw', freqAdjust: { bet33: 5 }, evAdjust: { bet33: 0.02 } },
+    ],
   },
   {
-    id: 'oop-air-low-board',
+    id: 'ip-overpair-wet-sizing',
     street: 'flop',
-    position: 'OOP_VS_IP',
-    boardTextureType: 'dry-low',
-    handCategoryType: 'air',
-    difficultyBase: 2,
+    position: 'IP_VS_BB',
+    boardTextureType: 'wet',
+    handCategoryType: 'overpair',
+    difficultyBase: 5,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [75, 100], evOffset: [0, 0.05] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.4, -0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.8, -0.4], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [0, 0], evOffset: [-0.2, -0.1] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.08, 0.02] },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [25, 50], evOffset: [0, 0.1], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [25, 50], evOffset: [-0.02, 0.08], sizeMultiplier: 0.75 },
       ],
     },
-    logicTagPool: ['RANGE_DISADVANTAGE', 'POT_CONTROL'],
-    explanationTemplate: '{hand} on {board} from OOP with nothing. Clear check — donking with air from OOP is a leak. Wait to see what IP does.',
+    logicTagPool: ['EQUITY_DENIAL', 'NUT_ADVANTAGE', 'DRAW_HEAVY'],
+    explanationTemplate: '{hand} overpair on {board} — wet boards demand larger sizing to deny equity from draws. 66% and 75% are both strong; 33% doesn\'t charge enough.',
+    modifiers: [
+      { condition: 'boardHasFlushDraw', freqAdjust: { bet75: 10 }, evAdjust: { bet75: 0.03 } },
+    ],
+  },
+  {
+    id: 'ip-set-dry-trap-or-bet',
+    street: 'flop',
+    position: 'IP_VS_BB',
+    boardTextureType: 'dry-high',
+    handCategoryType: 'set',
+    difficultyBase: 6,
+    potType: 'SRP',
+    strategyShape: {
+      actions: [
+        { action: 'check', freqRange: [25, 50], evOffset: [-0.03, 0.03] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.03, 0.03], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.05, 0.02], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.06, 0.01], sizeMultiplier: 0.75 },
+      ],
+    },
+    logicTagPool: ['NUT_ADVANTAGE', 'BOARD_COVERAGE', 'CHECK_RAISE_CANDIDATE'],
+    explanationTemplate: '{hand} flopped a set on {board}. Monster hand on a dry board — trapping and betting small are nearly identical in EV. Check to induce or bet small to build the pot.',
     modifiers: [],
   },
   {
-    id: 'oop-middlepair-dry',
+    id: 'ip-tptk-wet-protection',
+    street: 'flop',
+    position: 'IP_VS_BB',
+    boardTextureType: 'wet',
+    handCategoryType: 'top-pair-top-kicker',
+    difficultyBase: 5,
+    potType: 'SRP',
+    strategyShape: {
+      actions: [
+        { action: 'check', freqRange: [0, 0], evOffset: [-0.2, -0.1] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.1, 0] },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [25, 50], evOffset: [-0.02, 0.06], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [25, 50], evOffset: [0, 0.08], sizeMultiplier: 0.75 },
+      ],
+    },
+    logicTagPool: ['EQUITY_DENIAL', 'DRAW_HEAVY', 'NUT_ADVANTAGE'],
+    explanationTemplate: '{hand} on {board} — top pair needs to protect on draw-heavy texture. Larger sizings charge draws correctly. 33% is too cheap here.',
+    modifiers: [
+      { condition: 'boardHasFlushDraw', freqAdjust: { bet75: 5 }, evAdjust: { bet75: 0.02 } },
+    ],
+  },
+  {
+    id: 'ip-twopair-wet-sizing',
+    street: 'flop',
+    position: 'IP_VS_BB',
+    boardTextureType: 'wet',
+    handCategoryType: 'two-pair',
+    difficultyBase: 6,
+    potType: 'SRP',
+    strategyShape: {
+      actions: [
+        { action: 'check', freqRange: [0, 25], evOffset: [-0.1, 0] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.06, 0.02] },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [25, 50], evOffset: [-0.02, 0.05], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [25, 50], evOffset: [0, 0.06], sizeMultiplier: 0.75 },
+      ],
+    },
+    logicTagPool: ['NUT_ADVANTAGE', 'EQUITY_DENIAL', 'DRAW_HEAVY'],
+    explanationTemplate: '{hand} two pair on {board} — strong but vulnerable to draws. Large sizing denies equity but close between 66% and 75%. Board texture drives the decision.',
+    modifiers: [],
+  },
+
+  // ════════════════════════════════════════════════════
+  //  FLOP — IP BLUFFING (Sizing Selection)
+  // ════════════════════════════════════════════════════
+
+  {
+    id: 'ip-flushdraw-wet-semibluff',
+    street: 'flop',
+    position: 'IP_VS_BB',
+    boardTextureType: 'wet',
+    handCategoryType: 'flush-draw',
+    difficultyBase: 6,
+    potType: 'SRP',
+    strategyShape: {
+      actions: [
+        { action: 'check', freqRange: [25, 50], evOffset: [-0.04, 0.02] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.02, 0.04], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.04, 0.02], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.05, 0.01], sizeMultiplier: 0.75 },
+      ],
+    },
+    logicTagPool: ['BLUFF_CANDIDATE', 'DRAW_HEAVY', 'EQUITY_DENIAL'],
+    explanationTemplate: '{hand} flush draw on {board}. Semi-bluffing is viable but sizing is tricky — small bet risks less; check preserves equity realization. The EV of checking and betting small are very close.',
+    modifiers: [],
+  },
+  {
+    id: 'ip-gutshot-dry-bluff-or-give-up',
+    street: 'flop',
+    position: 'IP_VS_BB',
+    boardTextureType: 'dry-high',
+    handCategoryType: 'gutshot',
+    difficultyBase: 6,
+    potType: 'SRP',
+    strategyShape: {
+      actions: [
+        { action: 'check', freqRange: [25, 50], evOffset: [-0.02, 0.04] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.02, 0.04], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.06, 0], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.12, -0.05], sizeMultiplier: 0.75 },
+      ],
+    },
+    logicTagPool: ['BLUFF_CANDIDATE', 'POT_CONTROL', 'BOARD_COVERAGE'],
+    explanationTemplate: '{hand} gutshot on {board}. Mixed spot — checking realizes equity cheaply while small c-bet leverages range advantage. Larger sizing overcommits with a marginal draw.',
+    modifiers: [
+      { condition: 'hasBackdoorFlushDraw', freqAdjust: { bet33: 10 }, evAdjust: { bet33: 0.02 } },
+    ],
+  },
+  {
+    id: 'ip-overcards-low-board',
+    street: 'flop',
+    position: 'IP_VS_BB',
+    boardTextureType: 'dry-low',
+    handCategoryType: 'overcards',
+    difficultyBase: 5,
+    potType: 'SRP',
+    strategyShape: {
+      actions: [
+        { action: 'check', freqRange: [0, 25], evOffset: [-0.06, 0] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [50, 75], evOffset: [0, 0.06], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.04, 0.02], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.1, -0.04], sizeMultiplier: 0.75 },
+      ],
+    },
+    logicTagPool: ['RANGE_ADVANTAGE', 'EQUITY_DENIAL', 'BOARD_COVERAGE'],
+    explanationTemplate: '{hand} overcards on {board}. BTN has a massive range advantage on low boards. Small c-bet is preferred — 33% sizing achieves maximum fold equity per chip risked.',
+    modifiers: [],
+  },
+  {
+    id: 'ip-weaktp-dry-mixed',
+    street: 'flop',
+    position: 'IP_VS_BB',
+    boardTextureType: 'dry-high',
+    handCategoryType: 'weak-top-pair',
+    difficultyBase: 7,
+    potType: 'SRP',
+    strategyShape: {
+      actions: [
+        { action: 'check', freqRange: [25, 50], evOffset: [-0.02, 0.03] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.02, 0.03], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.04, 0.01], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.08, -0.02], sizeMultiplier: 0.75 },
+      ],
+    },
+    logicTagPool: ['POT_CONTROL', 'THIN_VALUE', 'BOARD_COVERAGE'],
+    explanationTemplate: '{hand} weak top pair on {board}. Genuine mixed spot — our hand has value but is vulnerable. Checking for pot control and betting small for thin value are nearly identical in EV.',
+    modifiers: [],
+  },
+
+  // ════════════════════════════════════════════════════
+  //  FLOP — OOP DECISIONS
+  // ════════════════════════════════════════════════════
+
+  {
+    id: 'oop-tptk-check-vs-lead',
+    street: 'flop',
+    position: 'OOP_VS_IP',
+    boardTextureType: 'dry-high',
+    handCategoryType: 'top-pair-top-kicker',
+    difficultyBase: 6,
+    potType: 'SRP',
+    strategyShape: {
+      actions: [
+        { action: 'check', freqRange: [50, 75], evOffset: [0, 0.04] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.02, 0.04], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 0], evOffset: [-0.1, -0.04] },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.15, -0.06], sizeMultiplier: 0.75 },
+      ],
+    },
+    logicTagPool: ['RANGE_DISADVANTAGE', 'POT_CONTROL', 'CHECK_RAISE_CANDIDATE'],
+    explanationTemplate: '{hand} on {board} OOP. Despite top pair, BB has a range disadvantage on high cards. Checking is standard but donking small has merit as a blocker bet. Close decision.',
+    modifiers: [],
+  },
+  {
+    id: 'oop-set-trap-decision',
+    street: 'flop',
+    position: 'OOP_VS_IP',
+    boardTextureType: 'dry-high',
+    handCategoryType: 'set',
+    difficultyBase: 5,
+    potType: 'SRP',
+    strategyShape: {
+      actions: [
+        { action: 'check', freqRange: [50, 75], evOffset: [0, 0.04] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.04, 0.02], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 0], evOffset: [-0.08, -0.02], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.04, 0.02], sizeMultiplier: 0.75 },
+      ],
+    },
+    logicTagPool: ['CHECK_RAISE_CANDIDATE', 'NUT_ADVANTAGE'],
+    explanationTemplate: '{hand} set on {board} OOP. Trapping is highest EV — IP c-bets frequently, setting up a check-raise. Some overbet leads are mixed in for balance.',
+    modifiers: [],
+  },
+  {
+    id: 'oop-flushdraw-wet-checkraise',
+    street: 'flop',
+    position: 'OOP_VS_IP',
+    boardTextureType: 'wet',
+    handCategoryType: 'flush-draw',
+    difficultyBase: 7,
+    potType: 'SRP',
+    strategyShape: {
+      actions: [
+        { action: 'check', freqRange: [50, 75], evOffset: [0, 0.03] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.03, 0.02], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.04, 0.01], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.08, -0.02], sizeMultiplier: 0.75 },
+      ],
+    },
+    logicTagPool: ['DRAW_HEAVY', 'CHECK_RAISE_CANDIDATE', 'BLUFF_CANDIDATE'],
+    explanationTemplate: '{hand} flush draw on {board} OOP. Checking to check-raise as a semi-bluff is strong. Donking small is occasionally mixed in. All options are close.',
+    modifiers: [],
+  },
+  {
+    id: 'oop-middlepair-pot-control',
     street: 'flop',
     position: 'OOP_VS_IP',
     boardTextureType: 'dry-high',
@@ -290,13 +286,34 @@ export const SCENARIO_TEMPLATES = [
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [75, 100], evOffset: [0, 0.1] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.3, -0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.6, -0.3], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [75, 100], evOffset: [0, 0.03] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.06, -0.01], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 0], evOffset: [-0.12, -0.05], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.15, -0.08], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['POT_CONTROL', 'RANGE_DISADVANTAGE'],
-    explanationTemplate: '{hand} has middle pair on {board} from OOP. Check to control the pot — our hand has showdown value but can\'t stand heavy action.',
+    explanationTemplate: '{hand} middle pair on {board} OOP. Clear check — our hand has showdown value but can\'t stand aggression. Donking bloats the pot against a stronger range.',
+    modifiers: [],
+  },
+  {
+    id: 'oop-twopair-wet-lead-or-trap',
+    street: 'flop',
+    position: 'OOP_VS_IP',
+    boardTextureType: 'wet',
+    handCategoryType: 'two-pair',
+    difficultyBase: 8,
+    potType: 'SRP',
+    strategyShape: {
+      actions: [
+        { action: 'check', freqRange: [25, 50], evOffset: [-0.02, 0.02] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.02, 0.02], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.03, 0.01], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.04, 0.01], sizeMultiplier: 0.75 },
+      ],
+    },
+    logicTagPool: ['CHECK_RAISE_CANDIDATE', 'NUT_ADVANTAGE', 'DRAW_HEAVY'],
+    explanationTemplate: '{hand} two pair on {board} OOP on a wet board. Check-raise is standard but leading to deny free cards is viable. Nearly indifferent — solver uses a true mixed strategy.',
     modifiers: [],
   },
 
@@ -305,129 +322,110 @@ export const SCENARIO_TEMPLATES = [
   // ════════════════════════════════════════════════════
 
   {
-    id: 'ip-tptk-monotone',
+    id: 'ip-tptk-monotone-caution',
     street: 'flop',
     position: 'IP_VS_BB',
     boardTextureType: 'monotone',
     handCategoryType: 'top-pair-top-kicker',
-    difficultyBase: 5,
+    difficultyBase: 7,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [50, 75], evOffset: [0, 0.1] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.1, 0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.4, -0.1], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [50, 75], evOffset: [0, 0.03] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.02, 0.03], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 0], evOffset: [-0.08, -0.02], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.1, -0.04], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['POT_CONTROL', 'DRAW_HEAVY'],
-    explanationTemplate: '{hand} on {board} (monotone). Top pair without a flush draw should play cautiously. Checking is often preferred — many turns will be scary and BB has lots of flushes.',
+    explanationTemplate: '{hand} on {board} (monotone) without a flush draw. Top pair is marginal — BB has many made flushes and flush draws. Checking and betting small are close; larger sizes are -EV.',
     modifiers: [],
   },
   {
-    id: 'ip-nutflush-draw-monotone',
+    id: 'ip-nutflushdraw-monotone',
     street: 'flop',
     position: 'IP_VS_BB',
     boardTextureType: 'monotone',
     handCategoryType: 'flush-draw',
-    difficultyBase: 4,
+    difficultyBase: 6,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [-0.2, 0] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [50, 75], evOffset: [0, 0.2], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.2, 0.1], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [0, 25], evOffset: [-0.06, 0] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [50, 75], evOffset: [0, 0.06], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.03, 0.03], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.05, 0.02], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['BLUFF_CANDIDATE', 'DRAW_HEAVY', 'NUT_ADVANTAGE'],
-    explanationTemplate: '{hand} has a nut flush draw on {board}. Semi-bluffing with the nut flush draw is strong — we have excellent equity and can build the pot for when we hit.',
+    explanationTemplate: '{hand} nut flush draw on {board}. Semi-bluffing with the best draw is strong. Small sizing is preferred on monotone boards. Close between 33% and 66%.',
     modifiers: [],
   },
-  {
-    id: 'ip-air-monotone',
-    street: 'flop',
-    position: 'IP_VS_BB',
-    boardTextureType: 'monotone',
-    handCategoryType: 'air',
-    difficultyBase: 2,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [75, 100], evOffset: [0, 0.05] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.4, -0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.8, -0.4], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['POT_CONTROL', 'DRAW_HEAVY'],
-    explanationTemplate: '{hand} on {board} (monotone) with no flush draw. Give up — betting without a draw on a monotone board is pure spew.',
-    modifiers: [],
-  },
-
-  // ════════════════════════════════════════════════════
-  //  FLOP — PAIRED BOARDS
-  // ════════════════════════════════════════════════════
-
   {
     id: 'ip-overcards-paired',
     street: 'flop',
     position: 'IP_VS_BB',
     boardTextureType: 'paired',
     handCategoryType: 'overcards',
-    difficultyBase: 4,
+    difficultyBase: 6,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [-0.2, 0] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [50, 75], evOffset: [0, 0.2], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.3, -0.1], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [0, 25], evOffset: [-0.05, 0.01] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [50, 75], evOffset: [0, 0.05], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.04, 0.02], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.08, -0.02], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['BOARD_PAIR', 'RANGE_ADVANTAGE', 'EQUITY_DENIAL'],
-    explanationTemplate: '{hand} with overcards on {board} (paired). Paired boards reduce strong hand combos. Small c-bet leverages range advantage since BB has fewer trips.',
+    explanationTemplate: '{hand} overcards on {board} (paired). Paired boards reduce strong combos for both sides. Small c-bet leverages range advantage — BB rarely has trips.',
     modifiers: [],
   },
 
   // ════════════════════════════════════════════════════
-  //  TURN — BARRELING
+  //  TURN — BARRELING DECISIONS
   // ════════════════════════════════════════════════════
 
   {
-    id: 'ip-tptk-turn-barrel',
+    id: 'ip-tptk-turn-sizing-decision',
     street: 'turn',
     position: 'IP_VS_BB',
     boardTextureType: 'dry-high',
     handCategoryType: 'top-pair-top-kicker',
-    difficultyBase: 3,
+    difficultyBase: 6,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [0, 25], evOffset: [-0.5, -0.2] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.1, 0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [50, 75], evOffset: [0, 0.3], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [0, 25], evOffset: [-0.08, -0.02] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.04, 0.02] },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [25, 50], evOffset: [0, 0.06], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [25, 50], evOffset: [-0.02, 0.05], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['THIN_VALUE', 'RANGE_ADVANTAGE'],
-    explanationTemplate: '{hand} on {board} — second barrel. Top pair should continue for value on the turn. Sizing up on the turn is standard to build the pot.',
+    explanationTemplate: '{hand} on {board} — second barrel. Top pair should continue on the turn but sizing is key. 66% and 75% extract value from worse pairs without over-committing.',
     modifiers: [
-      { condition: 'turnCompletesDraws', freqAdjust: { check: 15, bet75: -10 }, evAdjust: { check: 0.1 } },
+      { condition: 'turnCompletesDraws', freqAdjust: { check: 15, bet75: -10 }, evAdjust: { check: 0.03 } },
     ],
   },
   {
-    id: 'ip-overpair-turn-barrel',
+    id: 'ip-overpair-turn-value',
     street: 'turn',
     position: 'IP_VS_BB',
     boardTextureType: 'dry-low',
     handCategoryType: 'overpair',
-    difficultyBase: 2,
+    difficultyBase: 5,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [0, 0], evOffset: [-0.6, -0.3] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.1, 0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [50, 75], evOffset: [0, 0.3], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [0, 0], evOffset: [-0.1, -0.04] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.04, 0.02] },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [25, 50], evOffset: [0, 0.06], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [25, 50], evOffset: [-0.01, 0.05], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['NUT_ADVANTAGE', 'EQUITY_DENIAL', 'THIN_VALUE'],
-    explanationTemplate: '{hand} overpair on {board} — clear value barrel. Continue betting to deny equity to draws and extract value from weaker pairs.',
+    explanationTemplate: '{hand} overpair on {board} turn. Clear bet for value — sizing decision between 66% and 75%. Both are strong; the turn card determines which is marginally better.',
     modifiers: [],
   },
   {
@@ -436,57 +434,58 @@ export const SCENARIO_TEMPLATES = [
     position: 'IP_VS_BB',
     boardTextureType: 'wet',
     handCategoryType: 'flush-draw',
-    difficultyBase: 5,
+    difficultyBase: 7,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [-0.2, 0] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.1, 0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [25, 50], evOffset: [-0.1, 0.2], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [25, 50], evOffset: [-0.02, 0.03] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.04, 0.01] },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [25, 50], evOffset: [-0.02, 0.03], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.03, 0.02], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['BLUFF_CANDIDATE', 'DRAW_HEAVY', 'EQUITY_DENIAL'],
-    explanationTemplate: '{hand} still drawing on {board}. Turn semi-bluff is viable — we have one card to come and can fold out better hands. Checking is also reasonable to see a free river.',
+    explanationTemplate: '{hand} still drawing on {board}. Turn semi-bluff or check to see a free river? The EV of checking, medium bet, and large bet are all very close.',
     modifiers: [],
   },
   {
-    id: 'ip-air-turn-giveup',
-    street: 'turn',
-    position: 'IP_VS_BB',
-    boardTextureType: 'dry-high',
-    handCategoryType: 'air',
-    difficultyBase: 3,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [75, 100], evOffset: [0, 0.05] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.3, -0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.7, -0.3], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['POT_CONTROL', 'BLUFF_CANDIDATE'],
-    explanationTemplate: '{hand} on {board} with nothing on the turn. Time to give up — double-barreling air without blockers or draws is burning money.',
-    modifiers: [
-      { condition: 'hasBlocker', freqAdjust: { bet33: 10 }, evAdjust: { bet33: 0.1 } },
-    ],
-  },
-  {
-    id: 'ip-middlepair-turn-check',
+    id: 'ip-middlepair-turn-control',
     street: 'turn',
     position: 'IP_VS_BB',
     boardTextureType: 'dry-high',
     handCategoryType: 'middle-pair',
-    difficultyBase: 4,
+    difficultyBase: 6,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [75, 100], evOffset: [0, 0.1] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.3, -0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.5, -0.2], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [50, 75], evOffset: [0, 0.04] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.04, 0.01] },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 0], evOffset: [-0.1, -0.04], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.12, -0.05], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['POT_CONTROL', 'THIN_VALUE'],
-    explanationTemplate: '{hand} middle pair on {board}. Our hand has showdown value but can\'t withstand a raise. Check to control the pot and get to showdown cheaply.',
+    explanationTemplate: '{hand} middle pair on {board} turn. Showdown value hand — check to control pot. Small bet is occasionally mixed for thin value but risks getting raised.',
+    modifiers: [],
+  },
+  {
+    id: 'ip-marginal-turn-close',
+    street: 'turn',
+    position: 'IP_VS_BB',
+    boardTextureType: 'wet',
+    handCategoryType: 'marginal',
+    difficultyBase: 8,
+    potType: 'SRP',
+    strategyShape: {
+      actions: [
+        { action: 'check', freqRange: [25, 50], evOffset: [-0.01, 0.02] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.01, 0.02], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.03, 0.01], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.06, -0.01], sizeMultiplier: 0.75 },
+      ],
+    },
+    logicTagPool: ['POT_CONTROL', 'THIN_VALUE', 'DRAW_HEAVY'],
+    explanationTemplate: '{hand} on {board} — genuinely tough turn spot. Checking, small bet, and medium bet are all nearly identical in EV. Consider board texture and blocker effects.',
     modifiers: [],
   },
 
@@ -495,65 +494,68 @@ export const SCENARIO_TEMPLATES = [
   // ════════════════════════════════════════════════════
 
   {
-    id: 'oop-tptk-turn-check',
+    id: 'oop-tptk-turn-lead-or-check',
     street: 'turn',
     position: 'OOP_VS_IP',
     boardTextureType: 'dry-high',
     handCategoryType: 'top-pair-top-kicker',
-    difficultyBase: 5,
+    difficultyBase: 7,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [50, 75], evOffset: [0, 0.1] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.1, 0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.3, -0.1], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [50, 75], evOffset: [0, 0.03] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.02, 0.03], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 0], evOffset: [-0.06, -0.01], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.08, -0.02], sizeMultiplier: 0.75 },
       ],
     },
-    logicTagPool: ['POT_CONTROL', 'RANGE_DISADVANTAGE'],
-    explanationTemplate: '{hand} on {board} from OOP on the turn. Check-calling is usually best — leading out inflates the pot in a spot where IP has the range advantage.',
+    logicTagPool: ['POT_CONTROL', 'RANGE_DISADVANTAGE', 'BLOCK_BET'],
+    explanationTemplate: '{hand} on {board} OOP on the turn. Check-calling is the standard line but block-betting (33%) has merit to set your own price. Close between check and small lead.',
     modifiers: [],
   },
 
   // ════════════════════════════════════════════════════
-  //  RIVER — VALUE BETS
+  //  RIVER — VALUE DECISIONS
   // ════════════════════════════════════════════════════
 
   {
-    id: 'ip-tptk-river-value',
+    id: 'ip-tptk-river-thinvalue',
     street: 'river',
     position: 'IP_VS_BB',
     boardTextureType: 'dry-high',
     handCategoryType: 'top-pair-top-kicker',
-    difficultyBase: 4,
+    difficultyBase: 7,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [-0.2, 0] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.1, 0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [25, 50], evOffset: [0, 0.2], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [0, 25], evOffset: [-0.04, 0.01] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.02, 0.03], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [25, 50], evOffset: [-0.01, 0.03], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.04, 0.01], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['THIN_VALUE', 'BLOCKER_EFFECT'],
-    explanationTemplate: '{hand} on {board} on the river. Thin value bet — we beat most of villain\'s check-call range. Larger sizing extracts more from second pair and worse.',
+    explanationTemplate: '{hand} on {board} river. Thin value bet — villain\'s check-call range determines optimal sizing. 33% and 66% are close; 75% risks only getting called by better.',
     modifiers: [],
   },
   {
-    id: 'ip-overpair-river-value',
+    id: 'ip-overpair-river-sizing',
     street: 'river',
     position: 'IP_VS_BB',
     boardTextureType: 'dry-low',
     handCategoryType: 'overpair',
-    difficultyBase: 3,
+    difficultyBase: 5,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [0, 25], evOffset: [-0.3, -0.1] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.1, 0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [50, 75], evOffset: [0, 0.3], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [0, 0], evOffset: [-0.1, -0.04] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.04, 0.02] },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [25, 50], evOffset: [0, 0.06], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [25, 50], evOffset: [-0.02, 0.05], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['THIN_VALUE', 'NUT_ADVANTAGE'],
-    explanationTemplate: '{hand} overpair on {board} on the river. Clear value bet — we beat all pairs and most of villain\'s range. Size up to extract maximum value.',
+    explanationTemplate: '{hand} overpair on {board} river. Clear value bet — 66% and 75% both extract well from pairs and missed draws. Sizing depends on villain\'s perceived calling range.',
     modifiers: [],
   },
 
@@ -567,39 +569,21 @@ export const SCENARIO_TEMPLATES = [
     position: 'IP_VS_BB',
     boardTextureType: 'wet',
     handCategoryType: 'air',
-    difficultyBase: 6,
+    difficultyBase: 7,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [0, 0.05] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.3, -0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [25, 50], evOffset: [-0.1, 0.1], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [25, 50], evOffset: [-0.01, 0.02] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 0], evOffset: [-0.08, -0.03], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.03, 0.01], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [25, 50], evOffset: [-0.01, 0.02], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['BLUFF_CANDIDATE', 'BLOCKER_EFFECT'],
-    explanationTemplate: '{hand} missed all draws on {board}. River bluff is the only way to win the pot. Large sizing is preferred to maximize fold equity. Having blockers to villain\'s value hands is key.',
+    explanationTemplate: '{hand} missed all draws on {board}. River bluff or give up? If bluffing, size large (75%) to maximize fold equity. Small bluffs don\'t get enough folds. Checking is close.',
     modifiers: [
-      { condition: 'hasBlocker', freqAdjust: { bet75: 15 }, evAdjust: { bet75: 0.15 } },
+      { condition: 'hasBlocker', freqAdjust: { bet75: 10 }, evAdjust: { bet75: 0.03 } },
     ],
-  },
-  {
-    id: 'ip-air-river-giveup',
-    street: 'river',
-    position: 'IP_VS_BB',
-    boardTextureType: 'dry-high',
-    handCategoryType: 'air',
-    difficultyBase: 3,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [75, 100], evOffset: [0, 0.05] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.3, -0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.6, -0.3], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['POT_CONTROL'],
-    explanationTemplate: '{hand} on {board} on the river with nothing. No draws to represent, no blockers — checking is the clear play. Not every hand needs to bluff.',
-    modifiers: [],
   },
   {
     id: 'ip-blockerbluff-river',
@@ -607,20 +591,41 @@ export const SCENARIO_TEMPLATES = [
     position: 'IP_VS_BB',
     boardTextureType: 'wet',
     handCategoryType: 'air',
-    difficultyBase: 7,
+    difficultyBase: 9,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [-0.1, 0] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 0], evOffset: [-0.3, -0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [50, 75], evOffset: [0, 0.15], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [25, 50], evOffset: [-0.01, 0.01] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 0], evOffset: [-0.06, -0.02], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.02, 0.01], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [25, 50], evOffset: [-0.01, 0.01], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['BLOCKER_EFFECT', 'BLUFF_CANDIDATE'],
-    explanationTemplate: '{hand} on {board} — blocker bluff. Our hand blocks key value combos in villain\'s range, making a large river bluff profitable. The blocker effect is crucial here.',
+    explanationTemplate: '{hand} on {board} — blocker bluff. Our hand blocks villain\'s value combos. Large bluff is marginally +EV but checking is nearly the same. Razor thin solver split.',
     modifiers: [
-      { condition: 'hasBlocker', freqAdjust: { bet75: 10 }, evAdjust: { bet75: 0.1 } },
+      { condition: 'hasBlocker', freqAdjust: { bet75: 5 }, evAdjust: { bet75: 0.02 } },
     ],
+  },
+  {
+    id: 'ip-marginal-river-check-or-thinvalue',
+    street: 'river',
+    position: 'IP_VS_BB',
+    boardTextureType: 'dry-high',
+    handCategoryType: 'marginal',
+    difficultyBase: 9,
+    potType: 'SRP',
+    strategyShape: {
+      actions: [
+        { action: 'check', freqRange: [25, 50], evOffset: [-0.01, 0.01] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.01, 0.01], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.02, 0.01], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.05, -0.01], sizeMultiplier: 0.75 },
+      ],
+    },
+    logicTagPool: ['THIN_VALUE', 'BLOCKER_EFFECT', 'BLOCK_BET'],
+    explanationTemplate: '{hand} on {board} river — razor thin. Small bet extracts from worse but risks a raise. Checking is safe. Solver uses a near-50/50 split. This is peak difficulty.',
+    modifiers: [],
   },
 
   // ════════════════════════════════════════════════════
@@ -628,148 +633,48 @@ export const SCENARIO_TEMPLATES = [
   // ════════════════════════════════════════════════════
 
   {
-    id: 'oop-tptk-river-check',
+    id: 'oop-tptk-river-blockbet',
     street: 'river',
     position: 'OOP_VS_IP',
     boardTextureType: 'dry-high',
     handCategoryType: 'top-pair-top-kicker',
-    difficultyBase: 5,
+    difficultyBase: 7,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [50, 75], evOffset: [0, 0.1] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.1, 0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.3, -0.1], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [25, 50], evOffset: [-0.02, 0.02] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.01, 0.02], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.04, 0], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.08, -0.02], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['POT_CONTROL', 'THIN_VALUE', 'BLOCK_BET'],
-    explanationTemplate: '{hand} on {board} from OOP on the river. Mixed between checking (to induce bluffs) and small blocking bets (to set your own price). Avoid large bets — they only get called by better.',
+    explanationTemplate: '{hand} on {board} OOP river. Block bet (33%) sets your own price and denies IP a large bet. Checking to induce bluffs is close in EV. Avoid large sizes OOP.',
     modifiers: [],
   },
   {
-    id: 'oop-monster-river-value',
+    id: 'oop-monster-river-lead',
     street: 'river',
     position: 'OOP_VS_IP',
     boardTextureType: 'dry-high',
     handCategoryType: 'set',
-    difficultyBase: 4,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [-0.2, 0] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.1, 0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [50, 75], evOffset: [0, 0.3], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['NUT_ADVANTAGE', 'THIN_VALUE'],
-    explanationTemplate: '{hand} on {board} — monster hand on the river from OOP. Lead out for value — we need to get paid. Large sizing maximizes EV against villain\'s calling range.',
-    modifiers: [],
-  },
-
-  // ════════════════════════════════════════════════════
-  //  MIXED FREQUENCY / HARD SPOTS (difficulty 6-10)
-  // ════════════════════════════════════════════════════
-
-  {
-    id: 'ip-weaktp-dry-mixed',
-    street: 'flop',
-    position: 'IP_VS_BB',
-    boardTextureType: 'dry-high',
-    handCategoryType: 'weak-top-pair',
     difficultyBase: 6,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [-0.1, 0.05] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.05, 0.1] },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.2, -0.05], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [0, 25], evOffset: [-0.05, 0.01] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.03, 0.02] },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [25, 50], evOffset: [-0.01, 0.04], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [25, 50], evOffset: [0, 0.04], sizeMultiplier: 0.75 },
       ],
     },
-    logicTagPool: ['POT_CONTROL', 'THIN_VALUE', 'BOARD_COVERAGE'],
-    explanationTemplate: '{hand} weak top pair on {board}. Close spot — our hand is strong enough to value bet but vulnerable enough that checking for pot control is reasonable. Mixed frequency is correct.',
+    logicTagPool: ['NUT_ADVANTAGE', 'THIN_VALUE'],
+    explanationTemplate: '{hand} monster on {board} river OOP. Lead out for value — 66% and 75% both extract well. Checking risks IP checking back with a hand that would have called.',
     modifiers: [],
-  },
-  {
-    id: 'ip-marginal-turn-mixed',
-    street: 'turn',
-    position: 'IP_VS_BB',
-    boardTextureType: 'wet',
-    handCategoryType: 'marginal',
-    difficultyBase: 7,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [-0.05, 0.05] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.05, 0.05], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.15, 0], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['POT_CONTROL', 'THIN_VALUE', 'DRAW_HEAVY'],
-    explanationTemplate: '{hand} on {board} — genuinely tough spot. All options are close in EV. Consider board texture and opponent tendencies. This is what mixed strategies are for.',
-    modifiers: [],
-  },
-  {
-    id: 'ip-thinvalue-river-mixed',
-    street: 'river',
-    position: 'IP_VS_BB',
-    boardTextureType: 'dry-high',
-    handCategoryType: 'marginal',
-    difficultyBase: 8,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [-0.05, 0.05] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.05, 0.05], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.1, 0], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['THIN_VALUE', 'BLOCKER_EFFECT', 'BLOCK_BET'],
-    explanationTemplate: '{hand} on {board} — razor thin value. Betting small extracts thin value but risks a check-raise. Checking is safe but may miss value. A true solver split.',
-    modifiers: [],
-  },
-  {
-    id: 'oop-checkraise-or-call-mixed',
-    street: 'flop',
-    position: 'OOP_VS_IP',
-    boardTextureType: 'wet',
-    handCategoryType: 'two-pair',
-    difficultyBase: 7,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [50, 75], evOffset: [0, 0.05] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.05, 0.05], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.1, 0.05], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['CHECK_RAISE_CANDIDATE', 'NUT_ADVANTAGE', 'DRAW_HEAVY'],
-    explanationTemplate: '{hand} two pair on {board} from OOP on a wet board. Check to set up a check-raise is strong, but leading into IP is also viable to deny equity. Close decision.',
-    modifiers: [],
-  },
-  {
-    id: 'ip-bluffcatch-river-mixed',
-    street: 'river',
-    position: 'IP_VS_BB',
-    boardTextureType: 'wet',
-    handCategoryType: 'marginal',
-    difficultyBase: 8,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [50, 75], evOffset: [0, 0.05] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.1, 0], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.1, 0], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['POT_CONTROL', 'BLOCKER_EFFECT'],
-    explanationTemplate: '{hand} on {board} — marginal showdown hand on the river. Checking to bluff-catch is often best. Betting turns our hand into a bluff, which is only right with specific blockers.',
-    modifiers: [
-      { condition: 'hasBlocker', freqAdjust: { bet75: 10 }, evAdjust: { bet75: 0.1 } },
-    ],
   },
 
   // ════════════════════════════════════════════════════
-  //  EXTREME DIFFICULTY (9-10) — BOSS-TIER SPOTS
+  //  BOSS-TIER SPOTS (difficulty 8-10)
   // ════════════════════════════════════════════════════
 
   {
@@ -778,19 +683,20 @@ export const SCENARIO_TEMPLATES = [
     position: 'IP_VS_BB',
     boardTextureType: 'wet',
     handCategoryType: 'air',
-    difficultyBase: 9,
+    difficultyBase: 10,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [-0.03, 0.03] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 0], evOffset: [-0.2, -0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [50, 75], evOffset: [-0.03, 0.03], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [25, 50], evOffset: [-0.01, 0.01] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 0], evOffset: [-0.05, -0.02], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.02, 0.01], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [25, 50], evOffset: [-0.01, 0.01], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['BLUFF_CANDIDATE', 'BLOCKER_EFFECT'],
-    explanationTemplate: '{hand} on {board} — high-level river decision. With the right blockers, a large polarized bluff is correct. Without them, checking is better. The EV difference is razor thin.',
+    explanationTemplate: '{hand} on {board} — boss-level river. With blockers, a polarized 75% bluff is correct. Without them, give up. The EV gap between check and bet75 is under 0.1 BB.',
     modifiers: [
-      { condition: 'hasBlocker', freqAdjust: { bet75: 10 }, evAdjust: { bet75: 0.05 } },
+      { condition: 'hasBlocker', freqAdjust: { bet75: 5 }, evAdjust: { bet75: 0.01 } },
     ],
   },
   {
@@ -799,17 +705,18 @@ export const SCENARIO_TEMPLATES = [
     position: 'IP_VS_BB',
     boardTextureType: 'dry-high',
     handCategoryType: 'marginal',
-    difficultyBase: 9,
+    difficultyBase: 10,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [-0.02, 0.02] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.02, 0.02], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.05, 0.02], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [25, 50], evOffset: [-0.01, 0.01] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.01, 0.01], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.02, 0.01], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.04, -0.01], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['THIN_VALUE', 'POT_CONTROL', 'BLOCKER_EFFECT'],
-    explanationTemplate: '{hand} on {board} — solver nightmare. The EV of checking and betting small are nearly identical. Your decision depends on subtle factors like blocker effects and opponent tendencies.',
+    explanationTemplate: '{hand} on {board} — solver nightmare. Check, bet33, and bet66 are within 0.05 BB of each other. Pure mixed strategy. No clearly "correct" answer.',
     modifiers: [],
   },
   {
@@ -822,13 +729,14 @@ export const SCENARIO_TEMPLATES = [
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [-0.02, 0.02] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.02, 0.02], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.05, 0.02], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [25, 50], evOffset: [-0.01, 0.01] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.01, 0.01], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.02, 0.01], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.02, 0.01], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['CHECK_RAISE_CANDIDATE', 'NUT_ADVANTAGE', 'DRAW_HEAVY'],
-    explanationTemplate: '{hand} set on {board} from OOP on a draw-heavy board. Trap via check-raise or lead to protect? Both lines have merit and the EV is nearly identical. True high-level decision.',
+    explanationTemplate: '{hand} set on {board} OOP wet. Trap via check-raise or lead to protect? Both are correct. Nearly indifferent — the wet texture makes leading more viable than on dry boards.',
     modifiers: [],
   },
   {
@@ -841,17 +749,18 @@ export const SCENARIO_TEMPLATES = [
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [-0.02, 0.02] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.02, 0.02], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.05, 0], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [25, 50], evOffset: [-0.01, 0.01] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.01, 0.01], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.02, 0.01], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.04, -0.01], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['BLOCK_BET', 'THIN_VALUE', 'BLOCKER_EFFECT', 'POT_CONTROL'],
-    explanationTemplate: '{hand} on {board} from OOP on the river. Block bet to deny a larger IP bet, or check to induce bluffs? The solver is nearly indifferent. This is the hardest spot in poker.',
+    explanationTemplate: '{hand} on {board} OOP river. Block bet to deny a larger IP bet, or check to induce bluffs? The solver is nearly indifferent. This is the hardest spot in poker.',
     modifiers: [],
   },
   {
-    id: 'boss-3bet-pot-oop',
+    id: 'boss-3bet-pot-oop-tptk',
     street: 'flop',
     position: 'OOP_VS_IP',
     boardTextureType: 'dry-high',
@@ -860,13 +769,14 @@ export const SCENARIO_TEMPLATES = [
     potType: '3BET',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [50, 75], evOffset: [-0.02, 0.02] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.02, 0.02], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.2, -0.1], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [50, 75], evOffset: [-0.01, 0.01] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.01, 0.01], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 0], evOffset: [-0.05, -0.01], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.06, -0.02], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['RANGE_DISADVANTAGE', 'POT_CONTROL', 'CHECK_RAISE_CANDIDATE'],
-    explanationTemplate: '{hand} in a 3-bet pot from OOP on {board}. Ranges are narrower in 3-bet pots, making decisions more polarized. Checking vs small lead is incredibly close.',
+    explanationTemplate: '{hand} in a 3-bet pot OOP on {board}. Narrow ranges make this incredibly close between check and small lead. 50/50 solver split — both lines are correct.',
     modifiers: [],
   },
 
@@ -875,41 +785,43 @@ export const SCENARIO_TEMPLATES = [
   // ════════════════════════════════════════════════════
 
   {
-    id: '3bet-ip-overpair',
+    id: '3bet-ip-overpair-sizing',
     street: 'flop',
     position: 'IP_VS_BB',
     boardTextureType: 'dry-low',
     handCategoryType: 'overpair',
-    difficultyBase: 3,
-    potType: '3BET',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [0, 25], evOffset: [-0.4, -0.1] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [75, 100], evOffset: [0, 0.3], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.2, 0.1], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['NUT_ADVANTAGE', 'RANGE_ADVANTAGE', 'EQUITY_DENIAL'],
-    explanationTemplate: '{hand} overpair in a 3-bet pot on {board}. In 3-bet pots, ranges are stronger and SPR is lower. Small c-bet to build the pot toward a shove.',
-    modifiers: [],
-  },
-  {
-    id: '3bet-ip-air',
-    street: 'flop',
-    position: 'IP_VS_BB',
-    boardTextureType: 'dry-high',
-    handCategoryType: 'air',
     difficultyBase: 5,
     potType: '3BET',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [50, 75], evOffset: [0, 0.1] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.1, 0.05], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.5, -0.2], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [0, 25], evOffset: [-0.06, 0] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [50, 75], evOffset: [0, 0.06], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.03, 0.03], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 25], evOffset: [-0.04, 0.02], sizeMultiplier: 0.75 },
+      ],
+    },
+    logicTagPool: ['NUT_ADVANTAGE', 'RANGE_ADVANTAGE', 'EQUITY_DENIAL'],
+    explanationTemplate: '{hand} overpair in a 3-bet pot on {board}. Lower SPR means small c-bet sets up a turn shove. 33% is generally preferred but medium sizing is close.',
+    modifiers: [],
+  },
+  {
+    id: '3bet-ip-air-mixed',
+    street: 'flop',
+    position: 'IP_VS_BB',
+    boardTextureType: 'dry-high',
+    handCategoryType: 'air',
+    difficultyBase: 7,
+    potType: '3BET',
+    strategyShape: {
+      actions: [
+        { action: 'check', freqRange: [25, 50], evOffset: [0, 0.03] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.02, 0.03], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 0], evOffset: [-0.08, -0.02], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.1, -0.04], sizeMultiplier: 0.75 },
       ],
     },
     logicTagPool: ['BLUFF_CANDIDATE', 'RANGE_ADVANTAGE'],
-    explanationTemplate: '{hand} air in a 3-bet pot on {board}. In 3-bet pots, c-betting air is riskier since opponent\'s range is stronger. Check back to realize equity or small bet as a range play.',
+    explanationTemplate: '{hand} air in a 3-bet pot on {board}. Opponent\'s range is stronger, so bluffing is riskier. Check and small c-bet are close — larger sizes are too expensive.',
     modifiers: [],
   },
 
@@ -918,41 +830,23 @@ export const SCENARIO_TEMPLATES = [
   // ════════════════════════════════════════════════════
 
   {
-    id: 'sb-tptk-dry',
+    id: 'sb-tptk-check-vs-lead',
     street: 'flop',
     position: 'SB_VS_BTN',
     boardTextureType: 'dry-high',
     handCategoryType: 'top-pair-top-kicker',
-    difficultyBase: 5,
+    difficultyBase: 7,
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [50, 75], evOffset: [0, 0.1] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.1, 0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.4, -0.1], sizeMultiplier: 0.75 },
+        { action: 'check', freqRange: [50, 75], evOffset: [0, 0.03] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.03, 0.02], sizeMultiplier: 0.33 },
+        { action: 'bet66', label: 'Bet 66%', freqRange: [0, 25], evOffset: [-0.04, 0.01], sizeMultiplier: 0.66 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.08, -0.02], sizeMultiplier: 0.75 },
       ],
     },
-    logicTagPool: ['RANGE_DISADVANTAGE', 'POT_CONTROL', 'POSITIONAL_ADVANTAGE'],
-    explanationTemplate: '{hand} from SB on {board}. SB has the worst position and a range disadvantage vs BTN. Checking is standard — use a check-raise strategy with strong hands.',
-    modifiers: [],
-  },
-  {
-    id: 'sb-air-dry',
-    street: 'flop',
-    position: 'SB_VS_BTN',
-    boardTextureType: 'dry-low',
-    handCategoryType: 'air',
-    difficultyBase: 3,
-    potType: 'SRP',
-    strategyShape: {
-      actions: [
-        { action: 'check', freqRange: [75, 100], evOffset: [0, 0.05] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.3, -0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [0, 0], evOffset: [-0.6, -0.3], sizeMultiplier: 0.75 },
-      ],
-    },
-    logicTagPool: ['RANGE_DISADVANTAGE', 'POT_CONTROL'],
-    explanationTemplate: '{hand} from SB on {board} with nothing. Check and fold to aggression. SB is the worst position to bluff from without a range advantage.',
+    logicTagPool: ['RANGE_DISADVANTAGE', 'POT_CONTROL', 'CHECK_RAISE_CANDIDATE'],
+    explanationTemplate: '{hand} from SB on {board}. SB is the worst position — check-raise strategy is standard. Some small leads mixed in. Close between check and 33%.',
     modifiers: [],
   },
 ];
