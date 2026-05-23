@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Target, Shield, Layers, ShieldAlert, Sparkles, ChevronRight,
-  Flame, Zap, Users, Crosshair, Star, Trophy,
+  Flame, Zap, Users, Crosshair, Star, Trophy, Swords,
 } from 'lucide-react';
 import { SCENARIOS, getLevelForXP, ACHIEVEMENTS } from '../data/gtoData';
 import LevelBar from './LevelBar';
@@ -29,11 +29,11 @@ function loadProgress() {
     const saved = localStorage.getItem('poker-genie-progress');
     if (saved) return JSON.parse(saved);
   } catch {}
-  return { xp: 0, totalHands: 0, totalCorrect: 0, bestStreak: 0, unlockedAchievements: [] };
+  return { xp: 0, totalHands: 0, totalCorrect: 0, bestStreak: 0, unlockedAchievements: [], bestArenaFloor: 0, bestArenaScore: 0 };
 }
 
 export default function DrillSelector({ drills, onSelect }) {
-  const [progress, setProgress] = useState(loadProgress);
+  const [progress] = useState(loadProgress);
   const levelInfo = getLevelForXP(progress.xp);
   const accuracy = progress.totalHands > 0
     ? Math.round((progress.totalCorrect / progress.totalHands) * 100)
@@ -73,7 +73,7 @@ export default function DrillSelector({ drills, onSelect }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.15 }}
-        className="flex items-center justify-center gap-6 mb-6 text-sm"
+        className="flex items-center justify-center gap-6 mb-6 text-sm flex-wrap"
       >
         <div className="flex items-center gap-2">
           <Target size={14} className="text-gray-400" />
@@ -97,6 +97,64 @@ export default function DrillSelector({ drills, onSelect }) {
         </div>
       </motion.div>
 
+      {/* Arena Mode Card */}
+      <div className="w-full max-w-2xl mb-4">
+        <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05, type: 'spring', stiffness: 200 }}
+          whileHover={{ scale: 1.02, y: -2 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => onSelect('arena')}
+          className="w-full text-left bg-gradient-to-br from-red-950/60 to-amber-950/60 hover:from-red-900/60 hover:to-amber-900/60 border border-red-500/20 hover:border-red-500/40 rounded-2xl p-5 transition-all duration-200 shadow-lg hover:shadow-xl cursor-pointer group"
+        >
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-2.5 rounded-xl bg-red-500/10 group-hover:bg-red-500/20 transition-colors">
+              <Swords size={22} className="text-red-400" />
+            </div>
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full border border-red-500/30 text-red-400 bg-red-500/10 uppercase tracking-wider">
+              Endless
+            </span>
+          </div>
+          <h3 className="text-lg font-bold text-gray-100 mb-1.5 group-hover:text-white transition-colors">
+            Arena Mode
+          </h3>
+          <p className="text-sm text-gray-400 leading-relaxed mb-3">
+            Survive as long as you can. Escalating difficulty, boss battles, and combo multipliers. How far can you go?
+          </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              {progress.bestArenaFloor > 0 && (
+                <span className="flex items-center gap-1">
+                  <Swords size={12} className="text-red-400" />
+                  Best: Floor {progress.bestArenaFloor}
+                </span>
+              )}
+              {progress.bestArenaScore > 0 && (
+                <span className="flex items-center gap-1">
+                  <Trophy size={12} className="text-gold" />
+                  {progress.bestArenaScore.toLocaleString()} pts
+                </span>
+              )}
+              {!progress.bestArenaFloor && (
+                <span>3 Lives — Infinite Hands — Boss Every Floor</span>
+              )}
+            </div>
+            <ChevronRight size={16} className="text-gray-600 group-hover:text-red-400 group-hover:translate-x-1 transition-all" />
+          </div>
+        </motion.button>
+      </div>
+
+      {/* Section Label */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.15 }}
+        className="w-full max-w-2xl mb-3"
+      >
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-1">Training Drills</h3>
+      </motion.div>
+
       {/* Drill Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
         {drills.map((drill, i) => {
@@ -109,7 +167,7 @@ export default function DrillSelector({ drills, onSelect }) {
               key={drill.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.06, type: 'spring', stiffness: 200 }}
+              transition={{ delay: 0.1 + i * 0.06, type: 'spring', stiffness: 200 }}
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => onSelect(drill.id)}
