@@ -1180,11 +1180,16 @@ export const ACHIEVEMENTS = [
   { id: 'streak_3', name: 'Hot Streak', description: 'Get 3 correct in a row', icon: 'flame', check: (s) => s.bestStreak >= 3 },
   { id: 'streak_5', name: 'On Fire', description: 'Get 5 correct in a row', icon: 'flame', check: (s) => s.bestStreak >= 5 },
   { id: 'streak_10', name: 'Unstoppable', description: 'Get 10 correct in a row', icon: 'flame', check: (s) => s.bestStreak >= 10 },
+  { id: 'streak_16', name: 'MAX Combo', description: 'Reach 5x multiplier (16 in a row)', icon: 'flame', check: (s) => s.bestStreak >= 16 },
   { id: 'no_blunders_10', name: 'Careful Player', description: 'Play 10 hands without a blunder', icon: 'shield', check: (s) => s.handsWithoutBlunder >= 10 },
   { id: 'perfect_drill', name: 'Drill Master', description: 'Score 100% on any drill', icon: 'star', check: (s) => s.perfectDrill },
   { id: 'all_drills', name: 'Well Rounded', description: 'Try every drill at least once', icon: 'compass', check: (s) => s.drillsAttempted >= DRILLS.length },
   { id: 'accuracy_80', name: 'Sharpshooter', description: 'Maintain 80%+ accuracy over 20 hands', icon: 'crosshair', check: (s) => s.totalHands >= 20 && (s.totalCorrect / s.totalHands) >= 0.8 },
   { id: 'exploiter', name: 'Exploiter', description: 'Win 5 hands in exploitative mode', icon: 'zap', check: (s) => s.exploitWins >= 5 },
+  { id: 'arena_floor_3', name: 'Survivor', description: 'Clear Floor 3 in Arena Mode', icon: 'swords', check: (s) => (s.bestArenaFloor || 0) >= 3 },
+  { id: 'arena_floor_5', name: 'Gladiator', description: 'Clear Floor 5 in Arena Mode', icon: 'swords', check: (s) => (s.bestArenaFloor || 0) >= 5 },
+  { id: 'arena_floor_10', name: 'Champion', description: 'Clear Floor 10 in Arena Mode', icon: 'swords', check: (s) => (s.bestArenaFloor || 0) >= 10 },
+  { id: 'arena_boss_5', name: 'Boss Slayer', description: 'Defeat 5 bosses in Arena Mode', icon: 'skull', check: (s) => (s.arenaBossesDefeated || 0) >= 5 },
 ];
 
 // ── Exploitative Adjustments ──
