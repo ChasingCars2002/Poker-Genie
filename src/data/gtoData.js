@@ -145,13 +145,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 0, ev: 3.1 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 75, ev: 3.8, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 25, ev: 3.5, size: 4.88 },
+          { action: 'check',  frequency: 0,  ev: 3.1 },
+          { action: 'bet33',  frequency: 75, ev: 3.8, size: 2.15 },
+          { action: 'bet75',  frequency: 25, ev: 3.5, size: 4.88 },
+          { action: 'betPot', frequency: 0,  ev: 3.2, size: 6.5 },
         ],
         bestAction: 'bet33',
         logicTags: ['RANGE_ADVANTAGE', 'NUT_ADVANTAGE'],
-        explanation: 'On A-high dry boards, BTN has a significant range and nut advantage. Top pair top kicker is a clear value hand. A small c-bet is preferred to keep BB\'s calling range wide.',
+        explanation: 'AKo on A-high dry — you have top pair top kicker with massive range and nut advantage. Small c-bet is dominant: BB must continue wide with weaker Ax, pocket pairs, and backdoor draws that all fold to larger sizing. Betting 75%+ kills your own action by folding the exact hands that pay you off. Mix occasional checks to protect your range from being exploited.',
       },
     },
     {
@@ -162,13 +163,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: 1.2 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 50, ev: 1.4, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: 0.8, size: 4.88 },
+          { action: 'check',  frequency: 50, ev: 1.2 },
+          { action: 'bet33',  frequency: 50, ev: 1.4, size: 2.15 },
+          { action: 'bet75',  frequency: 0,  ev: 0.8, size: 4.88 },
+          { action: 'betPot', frequency: 0,  ev: 0.5, size: 6.5 },
         ],
         bestAction: 'bet33',
         logicTags: ['EQUITY_DENIAL', 'BOARD_COVERAGE'],
-        explanation: 'KQo with backdoor flush draws has decent equity but is vulnerable to turn overcards. A small c-bet denies equity while building the pot cheaply. Checking is also fine as a mixed strategy.',
+        explanation: 'KQo with backdoor equity is a classic mixed strategy hand. The small c-bet exploits BTN\'s range advantage: you fold out weaker underpairs and gutshots that have equity against you. But checking is also correct — you realize equity cheaply and can make better decisions on the turn. Going larger with only backdoor equity is an EV mistake; you want to build the pot only when your equity justifies the investment.',
       },
     },
     {
@@ -179,13 +181,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 75, ev: -0.3 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 25, ev: -0.1, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: -0.8, size: 4.88 },
+          { action: 'check',  frequency: 75, ev: -0.3 },
+          { action: 'bet33',  frequency: 25, ev: -0.1, size: 2.15 },
+          { action: 'bet75',  frequency: 0,  ev: -0.8, size: 4.88 },
+          { action: 'betPot', frequency: 0,  ev: -1.2, size: 6.5 },
         ],
         bestAction: 'check',
         logicTags: ['POT_CONTROL', 'BLUFF_CANDIDATE'],
-        explanation: '76 suited with a gutshot is a marginal bluff candidate. Checking is preferred most of the time as we have little equity vs BB\'s continuing range. When we do bet, 33% size keeps it cheap.',
+        explanation: '76s has a gutshot but completely misses A-high. Check back most of the time — your equity against BB\'s continuing range is minimal. The occasional small c-bet is a range balance move and can fold out weak holdings, but the hand itself cannot justify aggression. Larger bets compound a losing situation. When you do check back, you preserve 4 outs and can see a cheap turn.',
       },
     },
     {
@@ -196,13 +199,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 25, ev: 4.0 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 50, ev: 4.5, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 25, ev: 4.3, size: 4.88 },
+          { action: 'check',  frequency: 25, ev: 4.0 },
+          { action: 'bet33',  frequency: 50, ev: 4.5, size: 2.15 },
+          { action: 'bet75',  frequency: 25, ev: 4.3, size: 4.88 },
+          { action: 'betPot', frequency: 0,  ev: 3.8, size: 6.5 },
         ],
         bestAction: 'bet33',
         logicTags: ['NUT_ADVANTAGE', 'THIN_VALUE'],
-        explanation: 'Two pair on a dry board is a strong hand. Small bet extracts thin value from Ax hands and pocket pairs. Mixing some checks to trap is also viable.',
+        explanation: 'Two pair on a dry board — strong hand but you want calls, not folds. The small bet keeps BB\'s entire continuing range in: Ax hands, pocket pairs, and missed draws all call comfortably. Checking traps and is also correct since this board is so favorable you can afford deception. Larger sizing folds out exactly the thin value targets you want to extract from.',
       },
     },
     {
@@ -213,13 +217,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: 0.4 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 50, ev: 0.6, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: -0.1, size: 4.88 },
+          { action: 'check',  frequency: 50, ev: 0.4 },
+          { action: 'bet33',  frequency: 50, ev: 0.6, size: 2.15 },
+          { action: 'bet75',  frequency: 0,  ev: -0.1, size: 4.88 },
+          { action: 'betPot', frequency: 0,  ev: -0.5, size: 6.5 },
         ],
         bestAction: 'bet33',
         logicTags: ['EQUITY_DENIAL', 'BLUFF_CANDIDATE'],
-        explanation: 'JTs with backdoor straight and flush draws is a good c-bet candidate. We deny equity from hands like 9x, Tx, and small pairs while having backup equity if called.',
+        explanation: 'JTs with backdoor flush and straight draws is a good range-bet candidate. The small c-bet folds out hands with marginal equity against yours (low pairs, weak kickers) while your backdoor equity provides insurance when called. Checking is equally valid — you see a free turn with live overcards. This is a genuine 50/50 mixed strategy spot where either line is defensible.',
       },
     },
     // ── Board: Kd 7s 2h (K-high dry) ──
@@ -231,13 +236,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 0, ev: 4.2 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 75, ev: 4.8, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 25, ev: 4.5, size: 4.88 },
+          { action: 'check',  frequency: 0,  ev: 4.2 },
+          { action: 'bet33',  frequency: 75, ev: 4.8, size: 2.15 },
+          { action: 'bet75',  frequency: 25, ev: 4.5, size: 4.88 },
+          { action: 'betPot', frequency: 0,  ev: 4.0, size: 6.5 },
         ],
         bestAction: 'bet33',
         logicTags: ['RANGE_ADVANTAGE', 'NUT_ADVANTAGE', 'THIN_VALUE'],
-        explanation: 'AK on K-high dry is the nuts effectively. Small bet extracts max value from Kx, pocket pairs, and floats. BB has very few strong hands here.',
+        explanation: 'AK on K-high is essentially the nuts on this board. Small c-bet extracts maximum value by keeping BB\'s entire range in: Kx hands, pocket pairs, floats, and backdoor draws all call the 33% bet while folding to larger sizing. This is a pure value efficiency play — how much can you extract from every single hand in their range across three streets? The answer is: stack them slowly with small bets.',
       },
     },
     {
@@ -248,13 +254,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: 0.8 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 50, ev: 1.0, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: 0.2, size: 4.88 },
+          { action: 'check',  frequency: 50, ev: 0.8 },
+          { action: 'bet33',  frequency: 50, ev: 1.0, size: 2.15 },
+          { action: 'bet75',  frequency: 0,  ev: 0.2, size: 4.88 },
+          { action: 'betPot', frequency: 0,  ev: -0.1, size: 6.5 },
         ],
         bestAction: 'bet33',
         logicTags: ['EQUITY_DENIAL', 'BOARD_COVERAGE'],
-        explanation: 'QJo has two overcards and gutshot potential. Betting small is good to deny equity from hands like A5, A4, small pairs. Check is fine too in a mixed strategy.',
+        explanation: 'QJo has two overcards on K-high — a mixed strategy hand. Small c-bet exploits range advantage: BB has many weak hands that fold (A-low, small pairs, missed connectors). Checking is equally valid because your overcards have equity and you avoid building a pot where you have no current pair. Either line works; what matters is that you never size up — your hand can\'t handle the heat of large pots without top pair.',
       },
     },
     {
@@ -265,13 +272,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: 2.1 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 50, ev: 2.3, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: 1.5, size: 4.88 },
+          { action: 'check',  frequency: 50, ev: 2.1 },
+          { action: 'bet33',  frequency: 50, ev: 2.3, size: 2.15 },
+          { action: 'bet75',  frequency: 0,  ev: 1.5, size: 4.88 },
+          { action: 'betPot', frequency: 0,  ev: 1.0, size: 6.5 },
         ],
         bestAction: 'bet33',
         logicTags: ['THIN_VALUE', 'EQUITY_DENIAL'],
-        explanation: 'Pocket 9s are a medium-strength hand below top pair. Small bet for thin value against lower pairs and to deny equity from overcards. Checking to pot control is also fine.',
+        explanation: 'Pocket 9s are second pair with no real protection concerns on a dry board. Thin value betting small extracts from 8x, 7x, 6x, and missed overcards while keeping the pot manageable. Checking is also valid — you control the pot and avoid situations where BB check-raises your pair. Never bet large: you only get action from hands that beat you (Kx, sets) while folding everything you want to call.',
       },
     },
     // ── Board: Jh Ts 4d (connected) ──
@@ -283,13 +291,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 25, ev: 3.0 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 25, ev: 3.2, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 50, ev: 3.5, size: 4.88 },
+          { action: 'check',  frequency: 25, ev: 3.0 },
+          { action: 'bet33',  frequency: 25, ev: 3.2, size: 2.15 },
+          { action: 'bet75',  frequency: 50, ev: 3.5, size: 4.88 },
+          { action: 'betPot', frequency: 0,  ev: 3.3, size: 6.5 },
         ],
         bestAction: 'bet75',
         logicTags: ['DRAW_HEAVY', 'THIN_VALUE'],
-        explanation: 'TPGK on a connected board with many draws. Larger sizing is preferred to charge draws and protect against straight/two-pair combos. BB has many draws in their range.',
+        explanation: 'TPGK on a connected board demands larger sizing to protect equity. BB\'s range has many draws: open-ended straights (K9, Q9, 87, 98), flush draws on two-tone boards, and combination draws. Small bets give these hands correct pot odds to continue; larger bets charge them real money. The EV difference between 33% and 75% on wet boards is significant — this is the spot where bet sizing most directly impacts your winrate.',
       },
     },
     {
@@ -300,13 +309,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: 0.2 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 25, ev: 0.4, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 25, ev: 0.3, size: 4.88 },
+          { action: 'check',  frequency: 50, ev: 0.2 },
+          { action: 'bet33',  frequency: 25, ev: 0.4, size: 2.15 },
+          { action: 'bet75',  frequency: 25, ev: 0.3, size: 4.88 },
+          { action: 'betPot', frequency: 0,  ev: -0.2, size: 6.5 },
         ],
         bestAction: 'bet33',
         logicTags: ['DRAW_HEAVY', 'BLUFF_CANDIDATE'],
-        explanation: 'Open-ended straight draw is a great semi-bluff candidate. We have 8 outs to the nuts. Mixing between checking (to see free cards) and betting (to build the pot and fold out better) is optimal.',
+        explanation: '87s with an open-ended straight draw is a powerful semi-bluff — 8 clean outs to the nuts. The choice between checking (free card) and semi-bluffing (fold equity + build pot) is genuinely close. Semi-bluffing small is preferred when the pot is relatively small and building it creates a larger payoff when you hit. Larger bets risk more chips than your current equity justifies. This is the core semi-bluff calculation: (fold equity + equity when called) vs (cost of bet).',
       },
     },
     {
@@ -317,13 +327,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 75, ev: -0.1 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 25, ev: 0.0, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: -0.6, size: 4.88 },
+          { action: 'check',  frequency: 75, ev: -0.1 },
+          { action: 'bet33',  frequency: 25, ev: 0.0, size: 2.15 },
+          { action: 'bet75',  frequency: 0,  ev: -0.6, size: 4.88 },
+          { action: 'betPot', frequency: 0,  ev: -1.0, size: 6.5 },
         ],
         bestAction: 'check',
         logicTags: ['POT_CONTROL'],
-        explanation: 'Low pocket pair on a connected board is in bad shape. Too many overcards and draws out there. Check back and hope to see a safe runout. This hand has little value betting.',
+        explanation: 'Low pocket pair on a connected board is essentially a marginal showdown hand. You\'re below top pair on a board full of overcards and straight draws — there\'s no hand in BB\'s continuing range that you\'re confidently ahead of. Check back to see a safe turn; your set outs (2 cards) are your equity. If a 5 comes on the turn, you have a strong hand to bet. Until then, pot control is essential.',
       },
     },
     // ── Board: Qs 6d 2c (Q-high dry) ──
@@ -335,13 +346,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 0, ev: 3.6 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 75, ev: 4.2, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 25, ev: 3.9, size: 4.88 },
+          { action: 'check',  frequency: 0,  ev: 3.6 },
+          { action: 'bet33',  frequency: 75, ev: 4.2, size: 2.15 },
+          { action: 'bet75',  frequency: 25, ev: 3.9, size: 4.88 },
+          { action: 'betPot', frequency: 0,  ev: 3.5, size: 6.5 },
         ],
         bestAction: 'bet33',
         logicTags: ['RANGE_ADVANTAGE', 'THIN_VALUE'],
-        explanation: 'AQ on Q-high dry board is a premium hand. Small sizing maximizes value as BB will call with many Qx, pocket pairs, and backdoor draws.',
+        explanation: 'AQ on Q-high dry is a premium hand that needs to extract value across all three streets. Small sizing maximizes total value: BB will call with all Qx, pocket pairs below Q, and backdoor draw hands. Going larger folds out the thin value targets while checking gives up a street of value against a hand you clearly have crushed. The dry board means no protection urgency — pure value efficiency is the only consideration.',
       },
     },
     {
@@ -352,13 +364,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: 0.3 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 50, ev: 0.5, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: -0.2, size: 4.88 },
+          { action: 'check',  frequency: 50, ev: 0.3 },
+          { action: 'bet33',  frequency: 50, ev: 0.5, size: 2.15 },
+          { action: 'bet75',  frequency: 0,  ev: -0.2, size: 4.88 },
+          { action: 'betPot', frequency: 0,  ev: -0.5, size: 6.5 },
         ],
         bestAction: 'bet33',
         logicTags: ['EQUITY_DENIAL', 'BLUFF_CANDIDATE'],
-        explanation: 'T9s has overcards and backdoor draws. Good c-bet bluff candidate on Q-high dry board where BTN has range advantage. Folds out small pairs and weak Ax hands.',
+        explanation: 'T9s has two overcards, a backdoor flush draw, and a gutshot — real equity on a board where BTN has range dominance. Small c-bet folds out small pairs and weak Ax, denying them equity cheaply. Checking is equally valid since you have future card equity. The key principle: this hand wants to see cheap turns; small bets accomplish that while also having fold equity.',
       },
     },
   ],
@@ -372,13 +385,14 @@ export const SCENARIOS = {
       potSize: 13.5, effectiveStack: 87, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 75, ev: 4.8 },
-          { action: 'bet33', label: 'Donk 33%', frequency: 0, ev: 3.9, size: 4.46 },
-          { action: 'bet75', label: 'Donk 75%', frequency: 25, ev: 4.2, size: 10.13 },
+          { action: 'check',  frequency: 75, ev: 4.8 },
+          { action: 'bet33',  frequency: 0,  ev: 3.9, size: 4.46 },
+          { action: 'bet75',  frequency: 25, ev: 4.2, size: 10.13 },
+          { action: 'betPot', frequency: 0,  ev: 3.3, size: 13.5 },
         ],
         bestAction: 'check',
         logicTags: ['POT_CONTROL', 'CHECK_RAISE_CANDIDATE'],
-        explanation: 'QQ on K-high board is a check most of the time. We have an overpair but face many Kx combos in villain\'s range. Check-calling is the standard line.',
+        explanation: 'QQ on K-high in a 3-bet pot — an overpair that may already be behind. BTN\'s 3-bet calling range has Kx at high frequency; check-calling is standard to realize equity cheaply. Any lead inflates the pot where you may already be a significant underdog. If BTN c-bets and you raise, you risk committing stacks with a second-best hand. Check, call one bet, reassess the turn.',
       },
     },
     {
@@ -389,13 +403,14 @@ export const SCENARIOS = {
       potSize: 13.5, effectiveStack: 87, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: 6.2 },
-          { action: 'bet33', label: 'Donk 33%', frequency: 25, ev: 5.8, size: 4.46 },
-          { action: 'bet75', label: 'Donk 75%', frequency: 25, ev: 6.0, size: 10.13 },
+          { action: 'check',  frequency: 50, ev: 6.2 },
+          { action: 'bet33',  frequency: 25, ev: 5.8, size: 4.46 },
+          { action: 'bet75',  frequency: 25, ev: 6.0, size: 10.13 },
+          { action: 'betPot', frequency: 0,  ev: 5.2, size: 13.5 },
         ],
         bestAction: 'check',
         logicTags: ['NUT_ADVANTAGE', 'CHECK_RAISE_CANDIDATE'],
-        explanation: 'AKs on K-high board is a premium hand we want to check-raise with. By checking, we let BTN c-bet, then we can raise for value against their entire continuation range.',
+        explanation: 'AKs on K-high in a 3-bet pot — top pair with the nut kicker, excellent check-raise candidate. Checking allows BTN to c-bet their entire range, then your raise forces them to continue with second-best hands (QQ, JJ, QJ) or fold. This extracts significantly more value than leading, since BTN bets into you with a wider range than they call your donk with.',
       },
     },
     {
@@ -406,13 +421,14 @@ export const SCENARIOS = {
       potSize: 13.5, effectiveStack: 87, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 100, ev: 3.2 },
-          { action: 'bet33', label: 'Donk 33%', frequency: 0, ev: 2.1, size: 4.46 },
-          { action: 'bet75', label: 'Donk 75%', frequency: 0, ev: 1.5, size: 10.13 },
+          { action: 'check',  frequency: 100, ev: 3.2 },
+          { action: 'bet33',  frequency: 0,   ev: 2.1, size: 4.46 },
+          { action: 'bet75',  frequency: 0,   ev: 1.5, size: 10.13 },
+          { action: 'betPot', frequency: 0,   ev: 0.8, size: 13.5 },
         ],
         bestAction: 'check',
         logicTags: ['POT_CONTROL', 'RANGE_DISADVANTAGE'],
-        explanation: 'TT on KJ7 is an underpair in a 3-bet pot. Pure check — we\'re a bluff catcher. Donking would be lighting money on fire against a range full of Kx and Jx.',
+        explanation: 'TT on KJ7 in a 3-bet pot is a pure bluff-catcher — check and pot-control or fold. BTN\'s 3-bet calling range contains KQ, KJ, AK, AJ, and all pairs above TT; you\'re behind significant portions of their range. Any lead inflates the pot with a hand that cannot comfortably call a raise. Check, see what BTN does, and make informed decisions. Your goal is damage control, not value extraction.',
       },
     },
     {
@@ -423,13 +439,14 @@ export const SCENARIOS = {
       potSize: 13.5, effectiveStack: 87, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 75, ev: 2.5 },
-          { action: 'bet33', label: 'Donk 33%', frequency: 25, ev: 2.3, size: 4.46 },
-          { action: 'bet75', label: 'Donk 75%', frequency: 0, ev: 1.4, size: 10.13 },
+          { action: 'check',  frequency: 75, ev: 2.5 },
+          { action: 'bet33',  frequency: 25, ev: 2.3, size: 4.46 },
+          { action: 'bet75',  frequency: 0,  ev: 1.4, size: 10.13 },
+          { action: 'betPot', frequency: 0,  ev: 0.8, size: 13.5 },
         ],
         bestAction: 'check',
         logicTags: ['DRAW_HEAVY', 'BLUFF_CANDIDATE'],
-        explanation: 'AQo has a gutshot (T makes a straight) and overcards. Check to pick off c-bets or check-raise as a semi-bluff. We have good equity but are behind most of villain\'s c-bet range.',
+        explanation: 'AQo has a backdoor nut flush draw, overcards, and a gutshot (T completes broadway). This hand has substantial equity when called — ~35% against top pair. Check-calling is the primary line, with occasional small leads to prevent BTN from always checking back. In a 3-bet pot, your nut equity (ace-high outs) justifies continuing. Aim for the check-raise semi-bluff if BTN c-bets.',
       },
     },
     // ── Board: 9c 6s 2h (low board, 3-bet pot) ──
@@ -441,13 +458,14 @@ export const SCENARIOS = {
       potSize: 13.5, effectiveStack: 87, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 75, ev: 2.8 },
-          { action: 'bet33', label: 'Donk 33%', frequency: 25, ev: 2.5, size: 4.46 },
-          { action: 'bet75', label: 'Donk 75%', frequency: 0, ev: 1.8, size: 10.13 },
+          { action: 'check',  frequency: 75, ev: 2.8 },
+          { action: 'bet33',  frequency: 25, ev: 2.5, size: 4.46 },
+          { action: 'bet75',  frequency: 0,  ev: 1.8, size: 10.13 },
+          { action: 'betPot', frequency: 0,  ev: 1.2, size: 13.5 },
         ],
         bestAction: 'check',
         logicTags: ['RANGE_ADVANTAGE', 'EQUITY_DENIAL'],
-        explanation: 'AK on a low board in a 3-bet pot — we actually have range advantage on low boards as caller. Check and let BTN c-bet, then decide. Our overcards have great equity.',
+        explanation: 'AK on a low board in a 3-bet pot — surprisingly, BB has range advantage on boards like this. Low boards favor the 3-bet caller\'s range which contains fewer pure air hands than BTN\'s position. Check to let BTN c-bet; if they fire, decide based on their sizing. Your two overcards have ~27% equity and the check-call keeps your range balanced with both strong hands and marginal holdings.',
       },
     },
     {
@@ -458,13 +476,14 @@ export const SCENARIOS = {
       potSize: 13.5, effectiveStack: 87, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: 7.5 },
-          { action: 'bet33', label: 'Donk 33%', frequency: 25, ev: 7.0, size: 4.46 },
-          { action: 'bet75', label: 'Donk 75%', frequency: 25, ev: 7.2, size: 10.13 },
+          { action: 'check',  frequency: 50, ev: 7.5 },
+          { action: 'bet33',  frequency: 25, ev: 7.0, size: 4.46 },
+          { action: 'bet75',  frequency: 25, ev: 7.2, size: 10.13 },
+          { action: 'betPot', frequency: 0,  ev: 6.8, size: 13.5 },
         ],
         bestAction: 'check',
         logicTags: ['NUT_ADVANTAGE', 'CHECK_RAISE_CANDIDATE'],
-        explanation: 'Top set on a dry board in a 3-bet pot. This is a monster. Check to induce BTN\'s c-bet then check-raise for maximum value. No need to rush — the pot is already big.',
+        explanation: 'Top set in a 3-bet pot on a dry low board — a monster in a large pot. Check-raise is the primary line: BTN will c-bet frequently, and your raise forces them to commit stacks with hands like AA, KK, or QQ that are drawing nearly dead. The check-raise maximizes pot size from a position of near-certainty. Some leading is also mixed in to prevent BTN from always checking back and denying you the check-raise opportunity.',
       },
     },
     {
@@ -475,13 +494,14 @@ export const SCENARIOS = {
       potSize: 13.5, effectiveStack: 87, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: 5.0 },
-          { action: 'bet33', label: 'Donk 33%', frequency: 25, ev: 4.6, size: 4.46 },
-          { action: 'bet75', label: 'Donk 75%', frequency: 25, ev: 4.8, size: 10.13 },
+          { action: 'check',  frequency: 50, ev: 5.0 },
+          { action: 'bet33',  frequency: 25, ev: 4.6, size: 4.46 },
+          { action: 'bet75',  frequency: 25, ev: 4.8, size: 10.13 },
+          { action: 'betPot', frequency: 0,  ev: 4.0, size: 13.5 },
         ],
         bestAction: 'check',
         logicTags: ['THIN_VALUE', 'POT_CONTROL'],
-        explanation: 'JJ is an overpair on a low board. We\'re ahead of most of BTN\'s range but there are some traps (QQ+, sets). Check-call is the main line; some donk bets are fine for protection.',
+        explanation: 'JJ is an overpair on a low 3-bet pot board — ahead of most hands but not invincible. Check-calling is standard; BTN\'s range contains overcards and higher pairs that need to be accounted for. When leading, medium sizing provides protection against draws while getting value from BTN\'s AK, AQ, and KQ — hands that have substantial equity against you. Avoid overbetting: you don\'t want to get check-raised off the best hand.',
       },
     },
   ],
@@ -495,13 +515,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: 4.1 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 50, ev: 4.5, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: 3.5, size: 4.88 },
+          { action: 'check',  frequency: 50, ev: 4.1 },
+          { action: 'bet33',  frequency: 50, ev: 4.5, size: 2.15 },
+          { action: 'bet75',  frequency: 0,  ev: 3.5, size: 4.88 },
+          { action: 'betPot', frequency: 0,  ev: 3.2, size: 6.5 },
         ],
         bestAction: 'bet33',
         logicTags: ['NUT_ADVANTAGE', 'BOARD_COVERAGE'],
-        explanation: 'AA with the Ah is extremely strong — overpair plus nut flush draw. On monotone boards, betting small is key. Our nut redraw makes this a strong bet.',
+        explanation: 'AA with the nut flush draw (Ah) on a monotone board — a truly dominant hand. Small c-bet is preferred: you want BB to call with their entire range of weaker flush draws and pairs, building a pot you will win at very high frequency. Checking is also correct to slow-play. Large bets fold too much of BB\'s range — on monotone boards, your goal is to extract from the wide range of players who will call small bets.',
       },
     },
     {
@@ -512,13 +533,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 75, ev: 2.0 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 25, ev: 1.8, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: 0.9, size: 4.88 },
+          { action: 'check',  frequency: 75, ev: 2.0 },
+          { action: 'bet33',  frequency: 25, ev: 1.8, size: 2.15 },
+          { action: 'bet75',  frequency: 0,  ev: 0.9, size: 4.88 },
+          { action: 'betPot', frequency: 0,  ev: 0.4, size: 6.5 },
         ],
         bestAction: 'check',
         logicTags: ['POT_CONTROL'],
-        explanation: 'KK without a heart is in trouble on this board. BB has many flush combos. Check back to control the pot and see a safe turn card.',
+        explanation: 'KK without a heart on a three-heart board — your overpair is significantly devalued. BB\'s range contains many flushes and flush draws that are ahead of or racing your hand. Checking is dominant: you avoid building a pot where you may be drawing thin. If BB leads the turn or river with a heart on board, you can make an informed fold. Betting into a board where opponent has many flushes is one of the most common BTN leaks.',
       },
     },
     {
@@ -529,13 +551,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 25, ev: 1.8 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 75, ev: 2.2, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: 1.2, size: 4.88 },
+          { action: 'check',  frequency: 25, ev: 1.8 },
+          { action: 'bet33',  frequency: 75, ev: 2.2, size: 2.15 },
+          { action: 'bet75',  frequency: 0,  ev: 1.2, size: 4.88 },
+          { action: 'betPot', frequency: 0,  ev: 0.8, size: 6.5 },
         ],
         bestAction: 'bet33',
         logicTags: ['DRAW_HEAVY', 'BLOCKER_EFFECT'],
-        explanation: 'Kh gives us the second nut flush draw. Betting small with one heart builds the pot for when we hit and also folds out hands that have us beat without a heart.',
+        explanation: 'Kh gives you the second nut flush draw — a powerful semi-bluff on a monotone board. Small bet builds the pot for when you hit (~36% equity to complete) while also folding out non-heart hands with marginal equity. You block the Kh-Xh flush that villain might otherwise represent. This is one of the best semi-bluffing hands available: you have the second nut draw and board coverage.',
       },
     },
     {
@@ -546,13 +569,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 75, ev: 0.4 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 25, ev: 0.3, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: -0.5, size: 4.88 },
+          { action: 'check',  frequency: 75, ev: 0.4 },
+          { action: 'bet33',  frequency: 25, ev: 0.3, size: 2.15 },
+          { action: 'bet75',  frequency: 0,  ev: -0.5, size: 4.88 },
+          { action: 'betPot', frequency: 0,  ev: -0.9, size: 6.5 },
         ],
         bestAction: 'check',
         logicTags: ['POT_CONTROL', 'RANGE_DISADVANTAGE'],
-        explanation: 'AK with no heart is basically air on this monotone board. We have zero equity against flushes and limited equity overall. Check back and give up most of the time.',
+        explanation: 'AK with no heart on a three-heart board is essentially air. Your overcards have minimal value against flushes, and BB\'s range is heavily weighted toward heart holdings. Check and take a free card; any heart that comes is a scare card for you. This is a clear "give up" spot — betting puts money in a pot where you\'re frequently behind with no draws. Occasional small leads are only for range balance.',
       },
     },
     // ── Board: Qs 8s 5s (spade monotone) ──
@@ -564,13 +588,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 25, ev: 2.5 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 75, ev: 3.0, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: 2.0, size: 4.88 },
+          { action: 'check',  frequency: 25, ev: 2.5 },
+          { action: 'bet33',  frequency: 75, ev: 3.0, size: 2.15 },
+          { action: 'bet75',  frequency: 0,  ev: 2.0, size: 4.88 },
+          { action: 'betPot', frequency: 0,  ev: 1.5, size: 6.5 },
         ],
         bestAction: 'bet33',
         logicTags: ['NUT_ADVANTAGE', 'DRAW_HEAVY'],
-        explanation: 'As gives us the nut flush draw with AK high. Bet small to build the pot and deny equity from non-spade hands. We have the best draw possible.',
+        explanation: 'As is the nut flush draw — you have the best possible draw on this monotone board. Small bet builds the pot for when you complete to the nuts and also denies equity from non-spade hands. The As specifically blocks the nut flush from being in villain\'s range, making your semi-bluff fold equity higher than expected. When you hit, you will win the pot; when you bet and they fold, you win the pot immediately.',
       },
     },
     {
@@ -581,13 +606,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 100, ev: 0.8 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 0, ev: 0.3, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: -0.5, size: 4.88 },
+          { action: 'check',  frequency: 100, ev: 0.8 },
+          { action: 'bet33',  frequency: 0,   ev: 0.3, size: 2.15 },
+          { action: 'bet75',  frequency: 0,   ev: -0.5, size: 4.88 },
+          { action: 'betPot', frequency: 0,   ev: -1.0, size: 6.5 },
         ],
         bestAction: 'check',
         logicTags: ['POT_CONTROL', 'RANGE_DISADVANTAGE'],
-        explanation: 'JJ with no spade is in terrible shape. Below top pair and no flush draw. Pure check — we have no value targets that call and every spade kills our hand.',
+        explanation: 'JJ with no spade on an all-spade board — pure check-back. You\'re below top pair with no flush draw: every call you get comes from a hand that beats you (spades) or is racing you (no-spade hands with pair equity). There is no hand in BB\'s continuing range that you\'re ahead of after they call. Save your chips and take the free turn card.',
       },
     },
     {
@@ -598,13 +624,14 @@ export const SCENARIOS = {
       potSize: 6.5, effectiveStack: 97, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 25, ev: 4.8 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 50, ev: 5.2, size: 2.15 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 25, ev: 4.9, size: 4.88 },
+          { action: 'check',  frequency: 25, ev: 4.8 },
+          { action: 'bet33',  frequency: 25, ev: 5.2, size: 2.15 },
+          { action: 'bet75',  frequency: 25, ev: 5.0, size: 4.88 },
+          { action: 'betPot', frequency: 25, ev: 5.4, size: 6.5 },
         ],
-        bestAction: 'bet33',
+        bestAction: 'betPot',
         logicTags: ['NUT_ADVANTAGE', 'THIN_VALUE'],
-        explanation: 'We flopped a flush! Bet small for thin value — we want calls from bare spades, pairs, and straight draws. Don\'t overbet and fold out everything.',
+        explanation: 'King-high flush — an extremely strong hand on a monotone flop. All four sizings work, but the overbet is slightly best: you have a near-nutted flush and want maximum value from BB\'s weaker flush draws, pairs, and hands that will rationalize a call. Overbetting on monotone boards with a high flush is the correct approach because BB\'s range is heavily weighted toward flushes — hands that will stack off with worse flushes.',
       },
     },
   ],
@@ -618,13 +645,14 @@ export const SCENARIOS = {
       potSize: 7, effectiveStack: 96.5, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 75, ev: 1.0 },
-          { action: 'bet33', label: 'Donk 33%', frequency: 25, ev: 1.2, size: 2.31 },
-          { action: 'bet75', label: 'Donk 75%', frequency: 0, ev: 0.5, size: 5.25 },
+          { action: 'check',  frequency: 75, ev: 1.0 },
+          { action: 'bet33',  frequency: 25, ev: 1.2, size: 2.31 },
+          { action: 'bet75',  frequency: 0,  ev: 0.5, size: 5.25 },
+          { action: 'betPot', frequency: 0,  ev: 0.0, size: 7.0 },
         ],
         bestAction: 'check',
         logicTags: ['POT_CONTROL', 'EQUITY_DENIAL'],
-        explanation: 'AJs missed this flop but retains good equity with two overcards and a backdoor flush draw. Checking is standard OOP.',
+        explanation: 'AJs has backdoor nut flush draw and two live overcards but completely missed Q-high. Checking is standard OOP: you pass initiative to BTN, see their action, and can make informed decisions. The occasional small lead balances your range and prevents BTN from checking back their entire range. With SB\'s positional disadvantage, checking preserves the option to check-raise with your equity when BTN c-bets.',
       },
     },
     {
@@ -635,13 +663,14 @@ export const SCENARIOS = {
       potSize: 7, effectiveStack: 96.5, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 75, ev: 3.2 },
-          { action: 'bet33', label: 'Donk 33%', frequency: 0, ev: 2.8, size: 2.31 },
-          { action: 'bet75', label: 'Donk 75%', frequency: 25, ev: 3.0, size: 5.25 },
+          { action: 'check',  frequency: 75, ev: 3.2 },
+          { action: 'bet33',  frequency: 0,  ev: 2.8, size: 2.31 },
+          { action: 'bet75',  frequency: 25, ev: 3.0, size: 5.25 },
+          { action: 'betPot', frequency: 0,  ev: 2.3, size: 7.0 },
         ],
         bestAction: 'check',
         logicTags: ['CHECK_RAISE_CANDIDATE', 'THIN_VALUE'],
-        explanation: 'Top pair decent kicker is a strong check-call or check-raise hand OOP. Let BTN c-bet then trap.',
+        explanation: 'Top pair with a backdoor flush draw from SB — a check-raise candidate. Checking allows BTN to c-bet their entire range; your check-raise then forces them to continue with second-best holdings like KQ, JJ, TT that are paying off your top pair. Occasional 75% lead is also in range to charge BTN\'s straight draws and flush draws while getting value. Never bet small from SB with a strong hand — it accomplishes nothing at minimal sizing.',
       },
     },
     {
@@ -652,13 +681,14 @@ export const SCENARIOS = {
       potSize: 7, effectiveStack: 96.5, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 100, ev: -0.2 },
-          { action: 'bet33', label: 'Donk 33%', frequency: 0, ev: -0.8, size: 2.31 },
-          { action: 'bet75', label: 'Donk 75%', frequency: 0, ev: -1.5, size: 5.25 },
+          { action: 'check',  frequency: 100, ev: -0.2 },
+          { action: 'bet33',  frequency: 0,   ev: -0.8, size: 2.31 },
+          { action: 'bet75',  frequency: 0,   ev: -1.5, size: 5.25 },
+          { action: 'betPot', frequency: 0,   ev: -2.1, size: 7.0 },
         ],
         bestAction: 'check',
         logicTags: ['POT_CONTROL', 'RANGE_DISADVANTAGE'],
-        explanation: 'Small pocket pair on Q-high board OOP — pure check-fold in most cases. We\'re behind virtually everything that continues. Don\'t waste chips.',
+        explanation: 'Small pocket pair on Q-high from SB — check and prepare to fold to any bet. You\'re behind Q-x, 9-x, overpairs, and anything that connects with this board. Your equity is essentially your set outs (2 cards, ~8%) and nothing else. Any money you put in the pot is going in as a significant underdog. Check and fold to aggression; don\'t compound a losing situation by building the pot.',
       },
     },
     {
@@ -669,13 +699,14 @@ export const SCENARIOS = {
       potSize: 7, effectiveStack: 96.5, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 75, ev: 2.0 },
-          { action: 'bet33', label: 'Donk 33%', frequency: 25, ev: 1.8, size: 2.31 },
-          { action: 'bet75', label: 'Donk 75%', frequency: 0, ev: 1.2, size: 5.25 },
+          { action: 'check',  frequency: 75, ev: 2.0 },
+          { action: 'bet33',  frequency: 25, ev: 1.8, size: 2.31 },
+          { action: 'bet75',  frequency: 0,  ev: 1.2, size: 5.25 },
+          { action: 'betPot', frequency: 0,  ev: 0.7, size: 7.0 },
         ],
         bestAction: 'check',
         logicTags: ['THIN_VALUE', 'POT_CONTROL'],
-        explanation: 'Second pair with a backdoor flush draw. Check-call is the main line. We have showdown value but can\'t handle heavy action. Some donk bets can be mixed in for balance.',
+        explanation: 'Second pair (9s) with a backdoor flush draw from SB — check-call oriented. This hand has genuine showdown value against BTN\'s continuation bets and floats, but it cannot handle a raise. Check-calling is standard: you realize equity cheaply and avoid building a large pot as a marginal hand OOP. The small lead is mixed in occasionally for range balance and to charge BTN\'s overcards a small equity tax.',
       },
     },
     // ── Board: 7h 5d 3s (low board SB defense) ──
@@ -687,13 +718,14 @@ export const SCENARIOS = {
       potSize: 7, effectiveStack: 96.5, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: 2.8 },
-          { action: 'bet33', label: 'Donk 33%', frequency: 25, ev: 2.6, size: 2.31 },
-          { action: 'bet75', label: 'Donk 75%', frequency: 25, ev: 2.5, size: 5.25 },
+          { action: 'check',  frequency: 50, ev: 2.8 },
+          { action: 'bet33',  frequency: 25, ev: 2.6, size: 2.31 },
+          { action: 'bet75',  frequency: 25, ev: 2.5, size: 5.25 },
+          { action: 'betPot', frequency: 0,  ev: 2.2, size: 7.0 },
         ],
         bestAction: 'check',
         logicTags: ['RANGE_ADVANTAGE', 'THIN_VALUE'],
-        explanation: 'Overpair on a low board where SB actually has range advantage. Check to induce a c-bet from BTN\'s overcards, then check-raise for value.',
+        explanation: 'Overpair on a low connected board from SB — a spot where SB actually has range advantage. Low boards favor SB\'s defending range over BTN\'s raising range. Check-raise is a powerful option here: BTN will c-bet with their overcards, and your raise with an overpair forces them to call or fold in a pot where you\'re heavily favored. Some leads are also in range to charge 6x and 4x straight draws before they improve.',
       },
     },
     {
@@ -704,13 +736,14 @@ export const SCENARIOS = {
       potSize: 7, effectiveStack: 96.5, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 25, ev: 4.5 },
-          { action: 'bet33', label: 'Donk 33%', frequency: 25, ev: 4.2, size: 2.31 },
-          { action: 'bet75', label: 'Donk 75%', frequency: 50, ev: 4.8, size: 5.25 },
+          { action: 'check',  frequency: 0,  ev: 4.5 },
+          { action: 'bet33',  frequency: 25, ev: 4.2, size: 2.31 },
+          { action: 'bet75',  frequency: 25, ev: 4.8, size: 5.25 },
+          { action: 'betPot', frequency: 50, ev: 5.1, size: 7.0 },
         ],
-        bestAction: 'bet75',
+        bestAction: 'betPot',
         logicTags: ['NUT_ADVANTAGE', 'BOARD_COVERAGE'],
-        explanation: 'Flopped the nut straight! On a low board from SB, we can donk bet large for value. BTN will call with overpairs, two pairs, and draws. Maximize value now — the board can pair.',
+        explanation: 'Nut straight on a low board from SB — extract maximum value immediately. The board can pair (giving someone a boat over your straight), so don\'t wait. Overbet is the best line: BTN will continue with any pair, any overpair, any draw, and even two-pair hands that can\'t fold. Pot-sized bets on low boards with strong hands are underutilized by most players — use this spot to build a large pot before dangerous turn cards arrive.',
       },
     },
   ],
@@ -724,13 +757,14 @@ export const SCENARIOS = {
       potSize: 10.8, effectiveStack: 94.85, street: 'turn',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 25, ev: 4.5 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 25, ev: 4.8, size: 3.56 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 50, ev: 5.2, size: 8.1 },
+          { action: 'check',  frequency: 10, ev: 4.5 },
+          { action: 'bet33',  frequency: 15, ev: 4.8, size: 3.56 },
+          { action: 'bet75',  frequency: 50, ev: 5.2, size: 8.1 },
+          { action: 'betPot', frequency: 25, ev: 5.5, size: 10.8 },
         ],
         bestAction: 'bet75',
         logicTags: ['NUT_ADVANTAGE', 'THIN_VALUE'],
-        explanation: 'AQ on AK3 board with K turn — we now have top two pair. Larger sizing gets value from single-pair hands, Kx and flush draws. This is a clear value barrel.',
+        explanation: 'AQ improved to top two pair when the K arrived — a strong hand worth building a pot with. BB\'s turn checking range is heavily capped: they would have check-raised with sets and two pair on the flop. A large bet forces tough decisions from Kx, missed draws with equity, and any underpairs that floated. The pot-sized overbet is tempting but a 75% bet achieves the same goal while keeping value hands in BB\'s range that would fold to a larger sizing.',
       },
     },
     {
@@ -741,13 +775,14 @@ export const SCENARIOS = {
       potSize: 10.8, effectiveStack: 94.85, street: 'turn',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 75, ev: -0.2 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 25, ev: 0.0, size: 3.56 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: -0.8, size: 8.1 },
+          { action: 'check',  frequency: 75, ev: -0.2 },
+          { action: 'bet33',  frequency: 25, ev: 0.0,  size: 3.56 },
+          { action: 'bet75',  frequency: 0,  ev: -0.8, size: 8.1 },
+          { action: 'betPot', frequency: 0,  ev: -1.0, size: 10.8 },
         ],
         bestAction: 'check',
         logicTags: ['POT_CONTROL', 'BLUFF_CANDIDATE'],
-        explanation: 'JTo with a gutshot — the K turn is bad for our bluffs as BB now has more Kx. Give up most of the time. Small bet occasionally with the straight draw is fine.',
+        explanation: 'JTo has a gutshot but the K turn is a disaster for our bluffing range — BB\'s calling range is now loaded with Kx that don\'t fold to any bet. We retain a few bluffing combos with small sizing since we have backdoor equity, but mostly this is a give-up street. Firing large into BB\'s reinforced range after they called an ace-high flop is burning chips with no fold equity.',
       },
     },
     {
@@ -758,13 +793,14 @@ export const SCENARIOS = {
       potSize: 10.8, effectiveStack: 94.85, street: 'turn',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 25, ev: 1.0 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 25, ev: 1.2, size: 3.56 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 50, ev: 1.5, size: 8.1 },
+          { action: 'check',  frequency: 0,  ev: 1.0 },
+          { action: 'bet33',  frequency: 25, ev: 1.2, size: 3.56 },
+          { action: 'bet75',  frequency: 25, ev: 1.5, size: 8.1 },
+          { action: 'betPot', frequency: 50, ev: 2.0, size: 10.8 },
         ],
-        bestAction: 'bet75',
+        bestAction: 'betPot',
         logicTags: ['DRAW_HEAVY', 'BLUFF_CANDIDATE', 'BLOCKER_EFFECT'],
-        explanation: 'Picked up a flush draw on the turn! KQs is now a powerful semi-bluff — we have the second nut flush draw plus two overcards. Barrel big for fold equity + equity when called.',
+        explanation: 'KsQs picked up the second-nut flush draw on the 5s turn — a powerful semi-bluff with 9 flush outs plus overcard equity. The overbet is optimal here: it polarizes our range and puts maximum pressure on BB\'s medium-strength hands like Ax without a spade. BB can only continue with the best Ax and sets, giving us excellent fold equity. When called, we still win roughly 35% of the time even against strong holdings — the combination of equity and fold equity makes the overbet a clear profit play.',
       },
     },
     {
@@ -775,13 +811,14 @@ export const SCENARIOS = {
       potSize: 15.8, effectiveStack: 89.12, street: 'turn',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 25, ev: 4.0 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 50, ev: 4.5, size: 5.21 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 25, ev: 4.2, size: 11.85 },
+          { action: 'check',  frequency: 25, ev: 4.0 },
+          { action: 'bet33',  frequency: 50, ev: 4.5, size: 5.21 },
+          { action: 'bet75',  frequency: 25, ev: 4.2, size: 11.85 },
+          { action: 'betPot', frequency: 0,  ev: 3.8, size: 15.8 },
         ],
         bestAction: 'bet33',
         logicTags: ['THIN_VALUE', 'BOARD_COVERAGE'],
-        explanation: 'TPGK on a brick turn. Small bet continues to extract from draws and worse pairs. The deuce changed nothing — keep the pressure on with a thin value barrel.',
+        explanation: 'TPGK on a connected board — the deuce is a blank but JT4 still has draws. A small turn bet charges straight draws (KQ, KQ, and backdoors), denies equity to 9x gutshots, and extracts thin value from Tx and 9x that floated. Betting large risks blowing out exactly the hands we want to keep in: BB calls 33% with weak Jx and underpairs but folds the same hands to a large bet, while strong hands like QTs or sets continue regardless of sizing.',
       },
     },
     {
@@ -792,13 +829,14 @@ export const SCENARIOS = {
       potSize: 15.8, effectiveStack: 89.12, street: 'turn',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: 0.5 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 25, ev: 0.6, size: 5.21 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 25, ev: 0.8, size: 11.85 },
+          { action: 'check',  frequency: 25, ev: 0.5 },
+          { action: 'bet33',  frequency: 10, ev: 0.6, size: 5.21 },
+          { action: 'bet75',  frequency: 15, ev: 0.8, size: 11.85 },
+          { action: 'betPot', frequency: 50, ev: 1.1, size: 15.8 },
         ],
-        bestAction: 'bet75',
+        bestAction: 'betPot',
         logicTags: ['DRAW_HEAVY', 'BLUFF_CANDIDATE'],
-        explanation: 'We turned an open-ended straight draw (9 makes the nuts). The Q is a scare card we can rep. Barrel big as a semi-bluff — huge equity when called and good fold equity.',
+        explanation: '87s turned an open-ended straight draw to the nuts — any 9 makes the absolute best hand. The overbet is the optimal play: the Q is a scare card we can credibly represent (QJ, QT are in BTN\'s range), and BB\'s range is capped since he can\'t hold AA or KK from a BB defend. Large bets force folds from two-pair hands like JT that would call smaller bets but can\'t stack off against a pot-sized bet on a board where BTN\'s range crushes.',
       },
     },
     {
@@ -809,13 +847,14 @@ export const SCENARIOS = {
       potSize: 10.8, effectiveStack: 94.85, street: 'turn',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 25, ev: 4.2 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 50, ev: 4.8, size: 3.56 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 25, ev: 4.5, size: 8.1 },
+          { action: 'check',  frequency: 25, ev: 4.2 },
+          { action: 'bet33',  frequency: 50, ev: 4.8, size: 3.56 },
+          { action: 'bet75',  frequency: 25, ev: 4.5, size: 8.1 },
+          { action: 'betPot', frequency: 0,  ev: 4.3, size: 10.8 },
         ],
         bestAction: 'bet33',
         logicTags: ['BOARD_PAIR', 'THIN_VALUE'],
-        explanation: 'Board paired the 7 — good for us. AK is now top pair on a paired board. BB\'s 7x just improved to trips but that\'s few combos. Bet small for value from underpairs and draws.',
+        explanation: 'AK has top pair on a board that just paired the 7 — only K7s (roughly 3 combos) in BB\'s range actually improved to trips. Small bets work perfectly here: BB continues with Kx, underpairs like 99-QQ, and any diamond draws. The paired board actually suppresses BB\'s bluff-raising frequency, making our value bets sticky. Over-sizing would fold out the thin-calling portion of BB\'s range that we want to extract from over multiple streets.',
       },
     },
     {
@@ -826,13 +865,14 @@ export const SCENARIOS = {
       potSize: 10.8, effectiveStack: 94.85, street: 'turn',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: 0.3 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 25, ev: 0.5, size: 3.56 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 25, ev: 0.6, size: 8.1 },
+          { action: 'check',  frequency: 50, ev: 0.3 },
+          { action: 'bet33',  frequency: 25, ev: 0.5, size: 3.56 },
+          { action: 'bet75',  frequency: 25, ev: 0.6, size: 8.1 },
+          { action: 'betPot', frequency: 0,  ev: 0.4, size: 10.8 },
         ],
         bestAction: 'bet75',
         logicTags: ['BLUFF_CANDIDATE', 'BLOCKER_EFFECT'],
-        explanation: 'Ace on the turn is a great barrel card — we can rep AK, AQ, AA. QJo blocks some of BB\'s calling combos (QT, JT). Big bet as a bluff is profitable here.',
+        explanation: 'The ace is one of the best turn cards to barrel — it directly improves our perceived range (AK, AQ, AA all credible) while potentially killing the equity of BB\'s Kx hands that just became second pair. QcJc also has backdoor club flush equity. The 75% bet strikes the right balance: large enough to be credible as a value bet with Ax, but not so large we over-commit with complete air. BB must fold unpaired hands and many Kx holdings here.',
       },
     },
   ],
@@ -846,13 +886,14 @@ export const SCENARIOS = {
       potSize: 28.5, effectiveStack: 72.75, street: 'river',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 25, ev: 1.5 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 0, ev: 0.8, size: 9.41 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 75, ev: 2.8, size: 21.38 },
+          { action: 'check',  frequency: 0,  ev: 1.5 },
+          { action: 'bet33',  frequency: 0,  ev: 0.8, size: 9.41 },
+          { action: 'bet75',  frequency: 75, ev: 2.8, size: 21.38 },
+          { action: 'betPot', frequency: 25, ev: 3.5, size: 28.5 },
         ],
-        bestAction: 'bet75',
-        logicTags: ['BLOCKER_EFFECT', 'BLUFF_CANDIDATE'],
-        explanation: 'AQs missed the flush but has the nut straight (Broadway). AQ makes the nuts on this runout! Bet big for value — BB will call with two pair, sets, and worse straights.',
+        bestAction: 'betPot',
+        logicTags: ['NUT_ADVANTAGE', 'OVERBET_VALUE'],
+        explanation: 'AQs makes Broadway — the nut straight on K-J-4-T-2 — a spot where many players dramatically under-size and leave money behind. BB\'s range after calling flop and turn is loaded with Kx, QJ, and two-pair combos that are pot-committed and often drawing dead. An overbet here extracts maximum value: BB calls with sets, two pair, and weaker straights — all of which you crush. The As also removes the nut flush draw possibility, making our hand unambiguous and our value massive.',
       },
     },
     {
@@ -863,13 +904,14 @@ export const SCENARIOS = {
       potSize: 28.5, effectiveStack: 72.75, street: 'river',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: -0.5 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 0, ev: -1.0, size: 9.41 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 50, ev: 0.2, size: 21.38 },
+          { action: 'check',  frequency: 50, ev: -0.5 },
+          { action: 'bet33',  frequency: 0,  ev: -1.0, size: 9.41 },
+          { action: 'bet75',  frequency: 25, ev: 0.2,  size: 21.38 },
+          { action: 'betPot', frequency: 25, ev: 0.4,  size: 28.5 },
         ],
         bestAction: 'bet75',
         logicTags: ['BLUFF_CANDIDATE', 'BLOCKER_EFFECT'],
-        explanation: '98o has a straight draw that missed but 9 blocks T9 and Q9 straights. Large river bluff representing the straight or flush. We need ~40% folds to profit — achievable against capped range.',
+        explanation: '98h missed — busted straight draw, nine-high at showdown. The 9 in our hand blocks T9 combos that make the Broadway straight, providing a real blocker effect. A large river bluff representing Broadway requires BB to fold Kx, which is plausible since the board is terrifying for one-pair hands. Small bets accomplish nothing — BB calls any medium pair easily with pot odds. If you bluff here, commit: go large or check-fold and wait for a better spot.',
       },
     },
     {
@@ -880,13 +922,14 @@ export const SCENARIOS = {
       potSize: 22, effectiveStack: 78, street: 'river',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: 3.0 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 50, ev: 3.2, size: 7.26 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: 2.5, size: 16.5 },
+          { action: 'check',  frequency: 50, ev: 3.0 },
+          { action: 'bet33',  frequency: 50, ev: 3.2, size: 7.26 },
+          { action: 'bet75',  frequency: 0,  ev: 2.5, size: 16.5 },
+          { action: 'betPot', frequency: 0,  ev: 2.2, size: 22 },
         ],
         bestAction: 'bet33',
         logicTags: ['THIN_VALUE', 'BLOCK_BET'],
-        explanation: 'KK on A river — we lost to Ax but still beat everything else. Small block bet targets Qx, JJ, TT. If raised, we can fold. This thin value bet is key to maximizing EV.',
+        explanation: 'KK became a bluff-catcher when the ace arrived, but we still beat everything except Ax. The small block bet is a two-way tool: it extracts thin value from Qx, medium pairs, and 8x that we beat, while simultaneously preventing BB from making a large bluff that might force us off the best hand. If raised large, we fold. This line maximizes EV by keeping the pot small with a vulnerable hand while still charging BB\'s checking range.',
       },
     },
     {
@@ -897,13 +940,14 @@ export const SCENARIOS = {
       potSize: 22, effectiveStack: 78, street: 'river',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 75, ev: -0.8 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 0, ev: -1.2, size: 7.26 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 25, ev: -0.3, size: 16.5 },
+          { action: 'check',  frequency: 75, ev: -0.8 },
+          { action: 'bet33',  frequency: 0,  ev: -1.2, size: 7.26 },
+          { action: 'bet75',  frequency: 25, ev: -0.3, size: 16.5 },
+          { action: 'betPot', frequency: 0,  ev: -1.5, size: 22 },
         ],
         bestAction: 'check',
         logicTags: ['BLUFF_CANDIDATE', 'BLOCKER_EFFECT'],
-        explanation: '76s bricked everything. The A river is a potential bluff card but we don\'t block any of BB\'s calling range. Give up most of the time — save your chips for better spots.',
+        explanation: '76s bricked every street — no pair, no draw made it. While the As is a scary card, we hold the 7s and 6s which block none of BB\'s calling range (he calls with Qx, Ax, 8x). Good river bluff candidates hold the ace (blocks Ax), a king (blocks KQ), or a spade from earlier streets. We\'re missing all meaningful blockers and our narrative is incoherent. Give up, preserve chips, and find a better bluffing candidate.',
       },
     },
     {
@@ -914,13 +958,14 @@ export const SCENARIOS = {
       potSize: 35, effectiveStack: 65, street: 'river',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 0, ev: 5.5 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 25, ev: 6.5, size: 11.55 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 75, ev: 7.8, size: 26.25 },
+          { action: 'check',  frequency: 0,  ev: 5.5 },
+          { action: 'bet33',  frequency: 10, ev: 6.5, size: 11.55 },
+          { action: 'bet75',  frequency: 40, ev: 7.8, size: 26.25 },
+          { action: 'betPot', frequency: 50, ev: 8.5, size: 35 },
         ],
-        bestAction: 'bet75',
-        logicTags: ['NUT_ADVANTAGE', 'THIN_VALUE'],
-        explanation: 'We turned the nut flush. River J changes nothing for us. Bet large for value — BB will call with straights, sets, two pair, and worse flushes. This is a clear value bet.',
+        bestAction: 'betPot',
+        logicTags: ['NUT_ADVANTAGE', 'OVERBET_VALUE'],
+        explanation: 'Ad2d turned the nut flush on a three-diamond board — this is an overbet situation. BB\'s range after floating flop and turn on a three-flush board includes smaller flushes (Kd-x, Qd-x), straights (97s, 79s), and sets/two-pair that feel too strong to fold. All of these hands will call a pot-sized bet because they feel committed, yet they\'re all drawing dead. The J river is irrelevant. Betting small here is the clearest EV leak possible: you have the nuts and get called anyway.',
       },
     },
     {
@@ -931,13 +976,14 @@ export const SCENARIOS = {
       potSize: 35, effectiveStack: 65, street: 'river',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 25, ev: -0.5 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 0, ev: -1.0, size: 11.55 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 75, ev: 0.5, size: 26.25 },
+          { action: 'check',  frequency: 25, ev: -0.5 },
+          { action: 'bet33',  frequency: 0,  ev: -1.0, size: 11.55 },
+          { action: 'bet75',  frequency: 50, ev: 0.5,  size: 26.25 },
+          { action: 'betPot', frequency: 25, ev: 0.6,  size: 35 },
         ],
         bestAction: 'bet75',
         logicTags: ['BLUFF_CANDIDATE', 'BLOCKER_EFFECT'],
-        explanation: 'KQo with Qd — we block the second nut flush! The J river also gives us a straight. Actually KQ makes a straight here (K-Q-J-T-9? No, Q-J-T-9-8? No). We have Q-high with a flush blocker. Big bluff — Qd blocks flushes, making it harder for BB to call.',
+        explanation: 'KsQd is a strong bluff candidate: the Qd removes Qd-Xd flush combos from BB\'s calling range, slightly reducing his frequency of continuing. Our hand cannot win at showdown — Q-high loses to any pair. The large bet is required since small bets won\'t fold medium pairs or weaker flushes that called three streets. Between a pot-sized overbet and 75%, the 75% line is preferred — it achieves similar fold rates while risking fewer chips and keeping a profitable bluff from becoming a coin flip.',
       },
     },
   ],
@@ -950,13 +996,14 @@ export const SCENARIOS = {
       potSize: 10, effectiveStack: 95, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 25, ev: 3.5 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 75, ev: 4.0, size: 3.3 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: 3.0, size: 7.5 },
+          { action: 'check',  frequency: 25, ev: 3.5 },
+          { action: 'bet33',  frequency: 75, ev: 4.0, size: 3.3 },
+          { action: 'bet75',  frequency: 0,  ev: 3.0, size: 7.5 },
+          { action: 'betPot', frequency: 0,  ev: 2.8, size: 10 },
         ],
         bestAction: 'bet33',
         logicTags: ['NUT_ADVANTAGE', 'THIN_VALUE'],
-        explanation: 'TPTK in a multiway pot — still bet, but go small. With multiple opponents, someone is more likely to have connected. Small bet targets wide calling ranges while keeping the pot manageable.',
+        explanation: 'TPTK is still strong multiway, but sizing down is mandatory. Against two opponents, the probability that someone has flopped a set, two pair, or strong draw increases significantly. Small bets charge draws from both players, extract thin value from underpairs, and keep the pot manageable in a spot where you cannot comfortably call a raise. If you face a raise here, you may need to fold TPTK — that\'s multiway dynamics at work.',
       },
     },
     {
@@ -967,13 +1014,14 @@ export const SCENARIOS = {
       potSize: 10, effectiveStack: 95, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 100, ev: 0.2 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 0, ev: -0.3, size: 3.3 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: -1.0, size: 7.5 },
+          { action: 'check',  frequency: 100, ev: 0.2 },
+          { action: 'bet33',  frequency: 0,   ev: -0.3, size: 3.3 },
+          { action: 'bet75',  frequency: 0,   ev: -1.0, size: 7.5 },
+          { action: 'betPot', frequency: 0,   ev: -1.5, size: 10 },
         ],
         bestAction: 'check',
         logicTags: ['POT_CONTROL', 'RANGE_DISADVANTAGE'],
-        explanation: 'QJ in a multiway pot with K on board — pure check. Bluffing into multiple opponents is far less effective. Someone likely has a K or better. Wait for a better spot.',
+        explanation: 'QJo whiffed completely and bluffing into two opponents is nearly always a losing play. The fundamental issue: to profit, both opponents must fold simultaneously. If opponent A folds 55% and opponent B folds 55%, you only have roughly 30% combined fold equity — far below breakeven for most sizings. Check, look for a free card, and reassess. Save your bluffing frequency for spots with good blockers and fewer opponents.',
       },
     },
     {
@@ -984,13 +1032,14 @@ export const SCENARIOS = {
       potSize: 10, effectiveStack: 95, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: 5.5 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 25, ev: 5.2, size: 3.3 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 25, ev: 5.0, size: 7.5 },
+          { action: 'check',  frequency: 50, ev: 5.5 },
+          { action: 'bet33',  frequency: 25, ev: 5.2, size: 3.3 },
+          { action: 'bet75',  frequency: 25, ev: 5.0, size: 7.5 },
+          { action: 'betPot', frequency: 0,  ev: 4.5, size: 10 },
         ],
         bestAction: 'check',
         logicTags: ['CHECK_RAISE_CANDIDATE', 'NUT_ADVANTAGE'],
-        explanation: 'Middle set in a multiway pot — slowplay for a street. Let others catch up or bet into us. With 2 opponents, there\'s a higher chance someone will stab. Check-raise is devastating.',
+        explanation: 'Middle set is a monster, but the check-raise line extracts maximum value multiway. With two opponents, at least one is likely to stab at the pot, giving us the opportunity to check-raise and build a massive pot immediately. Even if both check behind, we\'re fine — the K on board generates future action from any Kx. The check-raise also disguises our hand strength, while leading out advertises a strong hand and allows opponents to fold correctly.',
       },
     },
     {
@@ -1001,13 +1050,14 @@ export const SCENARIOS = {
       potSize: 10, effectiveStack: 95, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: 1.8 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 50, ev: 2.0, size: 3.3 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: 1.2, size: 7.5 },
+          { action: 'check',  frequency: 50, ev: 1.8 },
+          { action: 'bet33',  frequency: 50, ev: 2.0, size: 3.3 },
+          { action: 'bet75',  frequency: 0,  ev: 1.2, size: 7.5 },
+          { action: 'betPot', frequency: 0,  ev: 0.8, size: 10 },
         ],
         bestAction: 'bet33',
         logicTags: ['DRAW_HEAVY', 'NUT_ADVANTAGE'],
-        explanation: 'Nut flush draw on a wet low board in multiway. We can bet small to build the pot for when we hit, or check to see a free card. Both are fine — our draw is to the nuts.',
+        explanation: 'AcKc has the nut flush draw on a connected low board — roughly 40% equity multiway once we factor in flush outs plus two overcard outs. Small bets accomplish dual objectives: they build the pot for when we hit, and fold out medium-strength made hands that could beat us if we don\'t improve. Checking to see a free card is also correct. Larger sizing is suboptimal because we can\'t comfortably call a raise with just a draw, even a strong one.',
       },
     },
     {
@@ -1018,13 +1068,14 @@ export const SCENARIOS = {
       potSize: 10, effectiveStack: 95, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 0, ev: 3.5 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 25, ev: 3.8, size: 3.3 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 75, ev: 4.2, size: 7.5 },
+          { action: 'check',  frequency: 0,  ev: 3.5 },
+          { action: 'bet33',  frequency: 25, ev: 3.8, size: 3.3 },
+          { action: 'bet75',  frequency: 50, ev: 4.2, size: 7.5 },
+          { action: 'betPot', frequency: 25, ev: 4.5, size: 10 },
         ],
-        bestAction: 'bet75',
+        bestAction: 'betPot',
         logicTags: ['EQUITY_DENIAL', 'NUT_ADVANTAGE'],
-        explanation: 'AA on a wet low board multiway — bet BIG. Tons of draws and hands with equity against us. We need to charge draws from two opponents. Don\'t slow play — protect your hand.',
+        explanation: 'AA on a 7-6-2cc board multiway — this is a protection emergency. The board gives flush draws, straight draws (8x-5x, 9x-5x), and combo draws to both opponents combined. Against two players who both have incentive to call, an overbet is the correct play: you need to make draws expensive, and the dead money in the pot means you get snap-called by sets, two pair, flush draws, and combo draws — all of which you currently dominate. Slow-playing here and checking is the biggest mistake possible.',
       },
     },
   ],
@@ -1037,13 +1088,14 @@ export const SCENARIOS = {
       potSize: 18, effectiveStack: 82, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: 4.2 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 50, ev: 4.5, size: 5.94 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: 3.8, size: 13.5 },
+          { action: 'check',  frequency: 50, ev: 4.2 },
+          { action: 'bet33',  frequency: 50, ev: 4.5, size: 5.94 },
+          { action: 'bet75',  frequency: 0,  ev: 3.8, size: 13.5 },
+          { action: 'betPot', frequency: 0,  ev: 3.5, size: 18 },
         ],
         bestAction: 'bet33',
         logicTags: ['NUT_ADVANTAGE', 'RANGE_ADVANTAGE'],
-        explanation: 'We squeezed pre and hit top pair. In a 3-bet pot, we have range advantage. Small c-bet extracts value while keeping in worse Ax and pocket pairs. Strong hand in a strong spot.',
+        explanation: 'AJo hit top pair after squeezing — a very strong position. In a 3-bet pot, CO and BTN have capped their ranges by flatting pre: they cannot hold AA or KK. Our range advantage is significant since we have all the AA, KK, QQ, AK combos. A small c-bet capitalizes on this while keeping worse Ax, pocket pairs, and backdoor draws in the pot. Betting large here actually reduces EV because it folds out the exact hands we want to get three streets of value from.',
       },
     },
     {
@@ -1054,13 +1106,14 @@ export const SCENARIOS = {
       potSize: 18, effectiveStack: 82, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 75, ev: 3.5 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 25, ev: 3.2, size: 5.94 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: 2.5, size: 13.5 },
+          { action: 'check',  frequency: 75, ev: 3.5 },
+          { action: 'bet33',  frequency: 25, ev: 3.2, size: 5.94 },
+          { action: 'bet75',  frequency: 0,  ev: 2.5, size: 13.5 },
+          { action: 'betPot', frequency: 0,  ev: 2.8, size: 18 },
         ],
         bestAction: 'check',
         logicTags: ['POT_CONTROL', 'CHECK_RAISE_CANDIDATE'],
-        explanation: 'KK on A-high board after squeezing — tricky spot. Check and evaluate. If both opponents check, we likely have the best hand. If someone bets, we can call or raise based on sizing.',
+        explanation: 'KK facing an ace after squeezing — a classic trap hand. You must check most of the time. Against two opponents who both called a 3-bet, one of them very likely holds an ace: they wouldn\'t call off 3x raises without strong hands. Betting forces you to fold to a raise, so why put chips in? Check, gather information, and call one modest bet from a single opponent. If action gets large from both players, KK is likely a fold.',
       },
     },
     {
@@ -1071,13 +1124,14 @@ export const SCENARIOS = {
       potSize: 18, effectiveStack: 82, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 75, ev: 2.5 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 25, ev: 2.2, size: 5.94 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: 1.5, size: 13.5 },
+          { action: 'check',  frequency: 75, ev: 2.5 },
+          { action: 'bet33',  frequency: 25, ev: 2.2, size: 5.94 },
+          { action: 'bet75',  frequency: 0,  ev: 1.5, size: 13.5 },
+          { action: 'betPot', frequency: 0,  ev: 1.2, size: 18 },
         ],
         bestAction: 'check',
         logicTags: ['POT_CONTROL', 'RANGE_DISADVANTAGE'],
-        explanation: 'QQ facing an A on board in a 3-bet pot. We\'re behind all Ax. Check and play cautiously. This is more of a bluff-catcher now — don\'t invest too much.',
+        explanation: 'QQ after squeezing into two opponents who called off 3x with an A on board — one of the most difficult spots in poker. Your overpair is now a bluff-catcher. Two opponents calling a squeeze can comfortably hold AJ, AT, A9s, even AQ. Check to protect our range (we shouldn\'t always bet a 3-bet range on an A-high board) and to minimize losses when behind. Occasionally small-bet as a blocker on later streets if they both check back.',
       },
     },
     {
@@ -1088,13 +1142,14 @@ export const SCENARIOS = {
       potSize: 18, effectiveStack: 82, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 25, ev: 5.5 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 50, ev: 5.8, size: 5.94 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 25, ev: 5.5, size: 13.5 },
+          { action: 'check',  frequency: 25, ev: 5.5 },
+          { action: 'bet33',  frequency: 50, ev: 5.8, size: 5.94 },
+          { action: 'bet75',  frequency: 25, ev: 5.5, size: 13.5 },
+          { action: 'betPot', frequency: 0,  ev: 5.7, size: 18 },
         ],
         bestAction: 'bet33',
         logicTags: ['NUT_ADVANTAGE', 'EQUITY_DENIAL'],
-        explanation: 'AA on a low wet board in a squeeze pot. Bet to protect — lots of straight draws and connected hands in opponents\' ranges. Don\'t let them see free cards.',
+        explanation: 'AA on a low connected board in a squeeze pot — bet for protection. The 7-6-3 board is dangerous for ranges that called a squeeze: 87s, 98s, 54s, T8s all have significant equity. Against two opponents with combined draw-heavy ranges, you must charge those draws. The small bet is optimal in a 3-bet pot because the pot is already large and smaller bets generate more calls, building the pot further. If raised, you can profitably get it in — nobody raises a 3-bettor here without strong two-pair or better.',
       },
     },
     {
@@ -1105,13 +1160,14 @@ export const SCENARIOS = {
       potSize: 18, effectiveStack: 82, street: 'flop',
       gtoStrategy: {
         actions: [
-          { action: 'check', frequency: 50, ev: 0.8 },
-          { action: 'bet33', label: 'Bet 33%', frequency: 50, ev: 1.0, size: 5.94 },
-          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: 0.2, size: 13.5 },
+          { action: 'check',  frequency: 50, ev: 0.8 },
+          { action: 'bet33',  frequency: 50, ev: 1.0, size: 5.94 },
+          { action: 'bet75',  frequency: 0,  ev: 0.2, size: 13.5 },
+          { action: 'betPot', frequency: 0,  ev: -0.5, size: 18 },
         ],
         bestAction: 'bet33',
         logicTags: ['BOARD_COVERAGE', 'BLUFF_CANDIDATE'],
-        explanation: 'JTd whiffed but we can c-bet as a bluff. In squeeze pots we should c-bet wide since opponents have capped ranges. Small sizing puts pressure on their medium-strength hands.',
+        explanation: 'JTd missed the board but we exploit the capped ranges of our opponents — in a squeeze pot, CO and BTN hold pocket pairs, suited broadways, and some suited connectors, but not the strongest Ax or premium pairs. JTd has a gutshot draw and backdoor flush equity. The small c-bet folds out 88-TT and small pairs that have decent equity against us. Use this bluff selectively — don\'t barrel without improving on the turn.',
       },
     },
   ],
