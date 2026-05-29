@@ -1,63 +1,78 @@
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Ban, Check, TrendingUp } from 'lucide-react';
+import { Hand, Check, TrendingUp, Flame } from 'lucide-react';
+import { CANONICAL_ACTIONS } from '../engine/gtoEngine';
 
 const ACTION_CONFIG = {
-  fold: { label: 'Fold', color: 'bg-accent-red', hoverColor: 'hover:bg-red-500', icon: Ban, textColor: 'text-white' },
-  check: { label: 'Check', color: 'bg-accent-green', hoverColor: 'hover:bg-green-500', icon: Check, textColor: 'text-white' },
-  call: { label: 'Call', color: 'bg-accent-green', hoverColor: 'hover:bg-green-500', icon: Check, textColor: 'text-white' },
-  bet33: { label: 'Bet 33%', color: 'bg-accent-blue', hoverColor: 'hover:bg-blue-500', icon: TrendingUp, textColor: 'text-white' },
-  bet75: { label: 'Bet 75%', color: 'bg-accent-purple', hoverColor: 'hover:bg-purple-500', icon: TrendingUp, textColor: 'text-white' },
-  betPot: { label: 'Bet Pot', color: 'bg-amber-600', hoverColor: 'hover:bg-amber-500', icon: TrendingUp, textColor: 'text-white' },
+  check: { label: 'Check', color: 'bg-emerald-600', hoverColor: 'hover:bg-emerald-500', ring: 'ring-emerald-400', icon: Check },
+  call: { label: 'Call', color: 'bg-emerald-600', hoverColor: 'hover:bg-emerald-500', ring: 'ring-emerald-400', icon: Check },
+  bet33: { label: 'Bet 33%', color: 'bg-sky-600', hoverColor: 'hover:bg-sky-500', ring: 'ring-sky-400', icon: TrendingUp },
+  bet75: { label: 'Bet 75%', color: 'bg-violet-600', hoverColor: 'hover:bg-violet-500', ring: 'ring-violet-400', icon: TrendingUp },
+  betPot: { label: 'Overbet', color: 'bg-orange-600', hoverColor: 'hover:bg-orange-500', ring: 'ring-orange-400', icon: Flame },
+  fold: { label: 'Fold', color: 'bg-rose-700', hoverColor: 'hover:bg-rose-600', ring: 'ring-rose-400', icon: Hand },
 };
 
 export default function ActionBar({ actions, onAction, disabled, potSize }) {
-  const availableActions = actions
-    .filter(a => a.frequency > 0 || a.action === 'check' || a.action === 'fold')
-    .map(a => ({
-      ...a,
-      ...(ACTION_CONFIG[a.action] || ACTION_CONFIG.check),
-    }));
+  // Always present the four canonical options in a stable order so the
+  // 1–4 hotkeys never move under the player's fingers.
+  const byAction = {};
+  for (const a of actions || []) byAction[a.action] = a;
 
-  // Always include fold if not already present
-  const hasCheck = availableActions.some(a => a.action === 'check');
-  const hasFold = availableActions.some(a => a.action === 'fold');
+  const displayActions = CANONICAL_ACTIONS.map((act) => {
+    const a = byAction[act] || { action: act, frequency: 0 };
+    const cfg = ACTION_CONFIG[act] || ACTION_CONFIG.check;
+    return { ...a, ...cfg, label: a.label || cfg.label };
+  });
 
-  const displayActions = [];
-  if (!hasFold) displayActions.push({ action: 'fold', frequency: 0, ev: 0, ...ACTION_CONFIG.fold });
-  displayActions.push(...availableActions);
+  // Keyboard shortcuts: 1–4 fire the matching action.
+  useEffect(() => {
+    if (disabled) return;
+    const onKey = (e) => {
+      const idx = parseInt(e.key, 10) - 1;
+      if (idx >= 0 && idx < displayActions.length) {
+        e.preventDefault();
+        onAction(displayActions[idx].action);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [disabled, displayActions, onAction]);
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <div className="flex items-center justify-center gap-1 mb-3 text-sm text-gray-400">
+      <div className="flex items-center justify-center gap-2 mb-3 text-sm text-gray-400">
         <span>Pot:</span>
         <span className="text-gold font-semibold">{potSize?.toFixed(1)} BB</span>
+        <span className="text-gray-600">•</span>
+        <span className="text-xs text-gray-500">press 1–4</span>
       </div>
-      <div className="flex gap-3 justify-center flex-wrap">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
         {displayActions.map((a, i) => {
           const Icon = a.icon || Check;
-          const betAmount = a.size ? `(${a.size.toFixed(1)} BB)` : '';
+          const betAmount = a.size ? `${a.size.toFixed(1)} BB` : null;
           return (
             <motion.button
               key={a.action}
-              initial={{ y: 20, opacity: 0 }}
+              initial={{ y: 14, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: i * 0.05, type: 'spring', stiffness: 300 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              transition={{ delay: i * 0.04, type: 'spring', stiffness: 320, damping: 24 }}
+              whileHover={{ scale: disabled ? 1 : 1.04 }}
+              whileTap={{ scale: disabled ? 1 : 0.95 }}
               disabled={disabled}
               onClick={() => onAction(a.action)}
               className={`
-                ${a.color} ${a.hoverColor} ${a.textColor}
-                px-6 py-4 rounded-xl font-semibold text-base
-                flex flex-col items-center gap-1 min-w-[100px]
-                transition-all duration-150 shadow-lg
+                relative ${a.color} ${a.hoverColor} text-white
+                px-4 py-3.5 rounded-xl font-semibold text-base
+                flex flex-col items-center gap-1
+                transition-colors duration-150 shadow-lg
                 disabled:opacity-40 disabled:cursor-not-allowed
-                cursor-pointer
+                cursor-pointer focus:outline-none focus-visible:ring-2 ${a.ring}
               `}
             >
-              <Icon size={20} />
-              <span>{a.label}</span>
-              {betAmount && <span className="text-xs opacity-80">{betAmount}</span>}
+              <span className="absolute top-1.5 left-2 text-[0.6rem] font-bold opacity-50">{i + 1}</span>
+              <Icon size={18} />
+              <span className="leading-tight">{a.label}</span>
+              {betAmount && <span className="text-[0.65rem] opacity-80 font-mono">{betAmount}</span>}
             </motion.button>
           );
         })}

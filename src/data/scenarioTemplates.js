@@ -422,8 +422,9 @@ export const SCENARIO_TEMPLATES = [
     strategyShape: {
       actions: [
         { action: 'check', freqRange: [0, 0], evOffset: [-0.6, -0.3] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.1, 0.1], sizeMultiplier: 0.33 },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.15, 0.05], sizeMultiplier: 0.33 },
         { action: 'bet75', label: 'Bet 75%', freqRange: [50, 75], evOffset: [0, 0.3], sizeMultiplier: 0.75 },
+        { action: 'betPot', label: 'Overbet', freqRange: [0, 25], evOffset: [-0.15, 0.05], sizeMultiplier: 1.25 },
       ],
     },
     logicTagPool: ['NUT_ADVANTAGE', 'EQUITY_DENIAL', 'THIN_VALUE'],
@@ -548,8 +549,9 @@ export const SCENARIO_TEMPLATES = [
     strategyShape: {
       actions: [
         { action: 'check', freqRange: [0, 25], evOffset: [-0.3, -0.1] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [25, 50], evOffset: [-0.1, 0.1], sizeMultiplier: 0.33 },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.2, 0], sizeMultiplier: 0.33 },
         { action: 'bet75', label: 'Bet 75%', freqRange: [50, 75], evOffset: [0, 0.3], sizeMultiplier: 0.75 },
+        { action: 'betPot', label: 'Overbet', freqRange: [0, 25], evOffset: [-0.15, 0.05], sizeMultiplier: 1.25 },
       ],
     },
     logicTagPool: ['THIN_VALUE', 'NUT_ADVANTAGE'],
@@ -572,8 +574,9 @@ export const SCENARIO_TEMPLATES = [
     strategyShape: {
       actions: [
         { action: 'check', freqRange: [25, 50], evOffset: [0, 0.05] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.3, -0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [25, 50], evOffset: [-0.1, 0.1], sizeMultiplier: 0.75 },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 0], evOffset: [-0.4, -0.2], sizeMultiplier: 0.33 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [25, 50], evOffset: [-0.05, 0.05], sizeMultiplier: 0.75 },
+        { action: 'betPot', label: 'Overbet', freqRange: [0, 25], evOffset: [-0.12, 0.05], sizeMultiplier: 1.25 },
       ],
     },
     logicTagPool: ['BLUFF_CANDIDATE', 'BLOCKER_EFFECT'],
@@ -611,9 +614,10 @@ export const SCENARIO_TEMPLATES = [
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [-0.1, 0] },
+        { action: 'check', freqRange: [25, 50], evOffset: [-0.05, 0.03] },
         { action: 'bet33', label: 'Bet 33%', freqRange: [0, 0], evOffset: [-0.3, -0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [50, 75], evOffset: [0, 0.15], sizeMultiplier: 0.75 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [25, 50], evOffset: [-0.03, 0.05], sizeMultiplier: 0.75 },
+        { action: 'betPot', label: 'Overbet', freqRange: [25, 50], evOffset: [-0.03, 0.08], sizeMultiplier: 1.25 },
       ],
     },
     logicTagPool: ['BLOCKER_EFFECT', 'BLUFF_CANDIDATE'],
@@ -656,9 +660,10 @@ export const SCENARIO_TEMPLATES = [
     potType: 'SRP',
     strategyShape: {
       actions: [
-        { action: 'check', freqRange: [25, 50], evOffset: [-0.2, 0] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.1, 0.1], sizeMultiplier: 0.33 },
+        { action: 'check', freqRange: [0, 25], evOffset: [-0.3, -0.1] },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 25], evOffset: [-0.2, 0], sizeMultiplier: 0.33 },
         { action: 'bet75', label: 'Bet 75%', freqRange: [50, 75], evOffset: [0, 0.3], sizeMultiplier: 0.75 },
+        { action: 'betPot', label: 'Overbet', freqRange: [0, 25], evOffset: [-0.15, 0.1], sizeMultiplier: 1.25 },
       ],
     },
     logicTagPool: ['NUT_ADVANTAGE', 'THIN_VALUE'],
@@ -783,8 +788,9 @@ export const SCENARIO_TEMPLATES = [
     strategyShape: {
       actions: [
         { action: 'check', freqRange: [25, 50], evOffset: [-0.03, 0.03] },
-        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 0], evOffset: [-0.2, -0.1], sizeMultiplier: 0.33 },
-        { action: 'bet75', label: 'Bet 75%', freqRange: [50, 75], evOffset: [-0.03, 0.03], sizeMultiplier: 0.75 },
+        { action: 'bet33', label: 'Bet 33%', freqRange: [0, 0], evOffset: [-0.3, -0.15], sizeMultiplier: 0.33 },
+        { action: 'bet75', label: 'Bet 75%', freqRange: [25, 50], evOffset: [-0.03, 0.03], sizeMultiplier: 0.75 },
+        { action: 'betPot', label: 'Overbet', freqRange: [25, 50], evOffset: [-0.03, 0.03], sizeMultiplier: 1.25 },
       ],
     },
     logicTagPool: ['BLUFF_CANDIDATE', 'BLOCKER_EFFECT'],

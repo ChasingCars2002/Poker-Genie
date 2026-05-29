@@ -33,7 +33,7 @@ export default function TableView({ scenario, strategy, onAction, disabled }) {
           </motion.div>
           <div className="flex gap-2">
             <Card card="Xx" faceDown size="sm" delay={0} />
-            <Card card="Xx" faceDown size="sm" delay={0.1} />
+            <Card card="Xx" faceDown size="sm" delay={0.04} />
           </div>
         </div>
 
@@ -44,7 +44,7 @@ export default function TableView({ scenario, strategy, onAction, disabled }) {
           </div>
           <div className="flex gap-2">
             {boardCards.map((card, i) => (
-              <Card key={card + i} card={card} size="lg" delay={i * 0.12} />
+              <Card key={card + i} card={card} size="lg" delay={i * 0.04} />
             ))}
             {/* Empty slots for turn/river */}
             {!board.turn && (
@@ -61,7 +61,7 @@ export default function TableView({ scenario, strategy, onAction, disabled }) {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.12 }}
             className="mt-3 bg-gold/10 border border-gold/20 px-4 py-1 rounded-full"
           >
             <span className="text-gold font-bold text-sm">{potSize.toFixed(1)} BB</span>
@@ -72,13 +72,13 @@ export default function TableView({ scenario, strategy, onAction, disabled }) {
         <div className="relative flex flex-col items-center">
           <div className="flex gap-2 mb-3">
             {heroHand.map((card, i) => (
-              <Card key={card} card={card} size="lg" delay={0.4 + i * 0.15} />
+              <Card key={card} card={card} size="lg" delay={0.12 + i * 0.05} />
             ))}
           </div>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.18 }}
             className="bg-accent-blue/20 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-semibold text-blue-300 border border-blue-500/30"
           >
             Hero - {POSITIONS[heroPosition]} ({heroPosition})
@@ -89,7 +89,7 @@ export default function TableView({ scenario, strategy, onAction, disabled }) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.22 }}
           className="absolute top-4 right-4 text-xs text-gray-500"
         >
           Eff: {effectiveStack} BB

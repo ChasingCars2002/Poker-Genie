@@ -1,6 +1,10 @@
 // Mock GTO Solver Data
 // Provides pre-computed strategy data for sample boards.
 // Frequencies are "human-simplified" — rounded to nearest 25%.
+// Every strategy is run through normalizeStrategy() so frequencies and EVs are
+// guaranteed internally consistent (see engine/gtoEngine.js).
+
+import { normalizeStrategy, evLoss } from '../engine/gtoEngine';
 
 export const POSITIONS = {
   BTN: 'Button',
@@ -111,6 +115,17 @@ export const DRILLS = [
     villainPosition: 'CO+BTN',
     potType: '3BET',
   },
+  {
+    id: 'polarized-rivers',
+    name: 'Polarized River Overbets',
+    description: 'The highest-stakes street. Choose between four sizings — including pot-sized overbets — to maximize value and fold equity with a polarized range.',
+    category: 'Multi-Street',
+    difficulty: 'Advanced',
+    icon: 'gauge',
+    heroPosition: 'BTN',
+    villainPosition: 'BB',
+    potType: 'SRP',
+  },
 ];
 
 // ── Logic Tags ──
@@ -134,7 +149,7 @@ export const LOGIC_TAGS = {
 
 // ── Scenarios ──
 
-export const SCENARIOS = {
+const RAW_SCENARIOS = {
   'srp-btn-vs-bb': [
     // ── Board: As 8h 3c (A-high dry) ──
     {
@@ -1115,21 +1130,144 @@ export const SCENARIOS = {
       },
     },
   ],
+  'polarized-rivers': [
+    // Nut flush — the top of our range. Overbet for maximum value.
+    {
+      id: 'polar-1',
+      board: { flop: ['Ks', '9s', '4d'], turn: 'Qs', river: '2h' },
+      heroHand: ['As', 'Ts'],
+      heroPosition: 'BTN', villainPosition: 'BB',
+      potSize: 32, effectiveStack: 60, street: 'river',
+      gtoStrategy: {
+        actions: [
+          { action: 'check', frequency: 0, ev: 4.0 },
+          { action: 'bet33', label: 'Bet 33%', frequency: 0, ev: 5.5 },
+          { action: 'bet75', label: 'Bet 75%', frequency: 25, ev: 8.5 },
+          { action: 'betPot', label: 'Overbet', frequency: 75, ev: 9.4 },
+        ],
+        logicTags: ['NUT_ADVANTAGE', 'THIN_VALUE', 'BLOCKER_EFFECT'],
+        explanation: 'We hold the nut flush on a three-flush runout. Our range here is polarized to nut flushes and bluffs, so an overbet is ideal — villain must call wide with their bluff-catchers, and we get maximum value from worse flushes and two pair.',
+      },
+    },
+    // Top two pair — strong, but NOT nutted. Overbetting only folds out worse.
+    {
+      id: 'polar-2',
+      board: { flop: ['Ad', 'Qc', '7h'], turn: '3s', river: '2d' },
+      heroHand: ['Ac', 'Qd'],
+      heroPosition: 'BTN', villainPosition: 'BB',
+      potSize: 26, effectiveStack: 68, street: 'river',
+      gtoStrategy: {
+        actions: [
+          { action: 'check', frequency: 25, ev: 5.6 },
+          { action: 'bet33', label: 'Bet 33%', frequency: 0, ev: 5.2 },
+          { action: 'bet75', label: 'Bet 75%', frequency: 75, ev: 6.5 },
+          { action: 'betPot', label: 'Overbet', frequency: 0, ev: 5.0 },
+        ],
+        logicTags: ['THIN_VALUE', 'POT_CONTROL'],
+        explanation: 'Top two is a strong value hand but it is NOT the nuts — straights and sets beat us. A 75% bet gets called by worse Ax and Qx. Overbetting here is a trap: it only folds out the hands we beat and gets called by better. Size for value, not to blow villain off the pot.',
+      },
+    },
+    // Missed flush with the nut-flush blocker — textbook polarized overbet bluff.
+    {
+      id: 'polar-3',
+      board: { flop: ['Jh', 'Th', '4c'], turn: '7h', river: '2s' },
+      heroHand: ['Ah', '9c'],
+      heroPosition: 'BTN', villainPosition: 'BB',
+      potSize: 24, effectiveStack: 70, street: 'river',
+      gtoStrategy: {
+        actions: [
+          { action: 'check', frequency: 25, ev: 0.0 },
+          { action: 'bet33', label: 'Bet 33%', frequency: 0, ev: -1.0 },
+          { action: 'bet75', label: 'Bet 75%', frequency: 25, ev: 1.4 },
+          { action: 'betPot', label: 'Overbet', frequency: 50, ev: 1.8 },
+        ],
+        logicTags: ['BLOCKER_EFFECT', 'BLUFF_CANDIDATE'],
+        explanation: 'Three hearts are out and we hold the Ah — we block the nut flush, so villain rarely has it. With zero showdown value, an overbet representing the nut flush is highly profitable: our blocker makes it very hard for villain to continue. This is the perfect hand to apply maximum pressure.',
+      },
+    },
+    // Marginal top pair on the river — turning it into a bluff is a mistake.
+    {
+      id: 'polar-4',
+      board: { flop: ['Ks', '8d', '3c'], turn: '5h', river: 'Jc' },
+      heroHand: ['Kd', 'Td'],
+      heroPosition: 'BTN', villainPosition: 'BB',
+      potSize: 22, effectiveStack: 74, street: 'river',
+      gtoStrategy: {
+        actions: [
+          { action: 'check', frequency: 75, ev: 2.4 },
+          { action: 'bet33', label: 'Bet 33%', frequency: 25, ev: 2.3 },
+          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: 1.6 },
+          { action: 'betPot', label: 'Overbet', frequency: 0, ev: 0.4 },
+        ],
+        logicTags: ['POT_CONTROL', 'BLOCK_BET'],
+        explanation: 'Top pair with a weak kicker is a bluff-catcher, not a value hand. Checking gets to showdown and lets villain bluff. A small blocking bet is a fine mix to deny a worse hand a free showdown, but betting big only gets called by better — and overbetting turns a showdown hand into a pure spew.',
+      },
+    },
+    // Air with no blockers — not every hand gets to bluff.
+    {
+      id: 'polar-5',
+      board: { flop: ['Qd', '9c', '4s'], turn: '6h', river: '2c' },
+      heroHand: ['7d', '5d'],
+      heroPosition: 'BTN', villainPosition: 'BB',
+      potSize: 20, effectiveStack: 78, street: 'river',
+      gtoStrategy: {
+        actions: [
+          { action: 'check', frequency: 100, ev: 0.0 },
+          { action: 'bet33', label: 'Bet 33%', frequency: 0, ev: -1.4 },
+          { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: -2.0 },
+          { action: 'betPot', label: 'Overbet', frequency: 0, ev: -3.2 },
+        ],
+        logicTags: ['POT_CONTROL'],
+        explanation: 'We missed everything and hold no relevant blockers — we do not block villain\'s value hands, so a bluff has no leverage. Discipline matters: give up and save your chips. Bluffing here, especially with a big size, just lights money on fire.',
+      },
+    },
+    // Full house on a paired board — overbet to get maximum value from trips.
+    {
+      id: 'polar-6',
+      board: { flop: ['Td', '9c', '4h'], turn: 'Ts', river: '2d' },
+      heroHand: ['9d', '9s'],
+      heroPosition: 'BTN', villainPosition: 'BB',
+      potSize: 30, effectiveStack: 62, street: 'river',
+      gtoStrategy: {
+        actions: [
+          { action: 'check', frequency: 0, ev: 5.0 },
+          { action: 'bet33', label: 'Bet 33%', frequency: 0, ev: 6.0 },
+          { action: 'bet75', label: 'Bet 75%', frequency: 50, ev: 8.0 },
+          { action: 'betPot', label: 'Overbet', frequency: 50, ev: 8.0 },
+        ],
+        logicTags: ['NUT_ADVANTAGE', 'THIN_VALUE'],
+        explanation: 'Nines full is at the top of our range on this paired board. Villain still pays off with any Tx, so we can size up dramatically. Both a large bet and an overbet are excellent here — pick the size that extracts the most from trips and overpairs that can\'t fold.',
+      },
+    },
+  ],
 };
+
+// Run every authored strategy through the engine so frequencies and EVs are
+// guaranteed consistent, and every spot offers all four action options.
+function normalizeScenarioMap(map) {
+  const out = {};
+  for (const drillId of Object.keys(map)) {
+    out[drillId] = map[drillId].map((scenario) => ({
+      ...scenario,
+      gtoStrategy: normalizeStrategy(scenario.gtoStrategy, scenario.potSize),
+    }));
+  }
+  return out;
+}
+
+export const SCENARIOS = normalizeScenarioMap(RAW_SCENARIOS);
 
 // ── EV Loss Classification ──
 
-export function classifyEVLoss(evLoss) {
-  if (evLoss <= 0.05) return { label: 'Perfect', grade: 'perfect', color: '#22c55e' };
-  if (evLoss <= 0.25) return { label: 'Acceptable', grade: 'acceptable', color: '#3b82f6' };
-  if (evLoss <= 1.0) return { label: 'Inaccuracy', grade: 'inaccuracy', color: '#f59e0b' };
+export function classifyEVLoss(loss) {
+  if (loss <= 0.06) return { label: 'Perfect', grade: 'perfect', color: '#22c55e' };
+  if (loss <= 0.25) return { label: 'Acceptable', grade: 'acceptable', color: '#3b82f6' };
+  if (loss <= 1.0) return { label: 'Inaccuracy', grade: 'inaccuracy', color: '#f59e0b' };
   return { label: 'Blunder', grade: 'blunder', color: '#ef4444' };
 }
 
 export function calculateEVLoss(gtoStrategy, chosenAction) {
-  const bestEV = Math.max(...gtoStrategy.actions.map(a => a.ev));
-  const chosenEV = gtoStrategy.actions.find(a => a.action === chosenAction)?.ev ?? 0;
-  return Math.max(0, bestEV - chosenEV);
+  return evLoss(gtoStrategy, chosenAction);
 }
 
 export function simplifyFrequency(freq) {

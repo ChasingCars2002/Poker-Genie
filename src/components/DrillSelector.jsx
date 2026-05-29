@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Target, Shield, Layers, ShieldAlert, Sparkles, ChevronRight,
-  Flame, Zap, Users, Crosshair, Star, Trophy, Swords,
+  Flame, Zap, Users, Crosshair, Star, Trophy, Swords, Gauge,
 } from 'lucide-react';
 import { SCENARIOS, getLevelForXP, ACHIEVEMENTS } from '../data/gtoData';
 import LevelBar from './LevelBar';
@@ -16,6 +16,7 @@ const ICONS = {
   zap: Zap,
   users: Users,
   crosshair: Crosshair,
+  gauge: Gauge,
 };
 
 const DIFFICULTY_COLORS = {

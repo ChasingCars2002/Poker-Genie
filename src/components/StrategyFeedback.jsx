@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, AlertTriangle, XCircle, Info, ArrowRight, BarChart3, Trophy } from 'lucide-react';
 import { LOGIC_TAGS, simplifyFrequency } from '../data/gtoData';
@@ -45,9 +46,21 @@ function FrequencyBar({ action, frequency, ev, isChosen, isBest }) {
 }
 
 export default function StrategyFeedback({ feedback, onNext, isLastHand }) {
+  // Enter / Space advances to the next hand — keeps the session flowing fast.
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onNext();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onNext]);
+
   if (!feedback) return null;
 
-  const { chosenAction, bestAction, evLoss, classification, strategy, score, xpGained, streakBonus } = feedback;
+  const { chosenAction, bestAction, evLoss, classification, strategy, score, xpGained } = feedback;
   const GradeIcon = GRADE_ICONS[classification.grade];
   const bgClass = GRADE_BG[classification.grade];
 

@@ -1,7 +1,7 @@
 import { SCENARIO_TEMPLATES, POSITION_MATCHUPS, getTemplatesForDifficulty } from '../data/scenarioTemplates';
 import { generateDryBoard, generateWetBoard, generateMonotoneBoard, generatePairedBoard, generateTurnCard, generateRiverCard } from './boardGenerator';
 import { generateHandByCategory } from './handGenerator';
-import { calculateStrategy, adjustDifficultyEV } from './strategyCalculator';
+import { calculateStrategy } from './strategyCalculator';
 import { buildExplanation } from './explanationBuilder';
 
 let scenarioCounter = 0;
@@ -73,8 +73,7 @@ export function generateScenario(difficultyLevel, rng) {
 
   const { potSize, effectiveStack } = getPotAndStack(template);
 
-  let strategy = calculateStrategy(template, board, hand, potSize, rng);
-  strategy = adjustDifficultyEV(strategy, difficultyLevel);
+  const strategy = calculateStrategy(template, board, hand, potSize, rng);
 
   const explanation = buildExplanation(template, board, hand, strategy);
 
@@ -120,8 +119,7 @@ export function generateBossScenario(floorNumber, rng) {
 
   const { potSize, effectiveStack } = getPotAndStack(template);
 
-  let strategy = calculateStrategy(template, board, hand, potSize, rng);
-  strategy = adjustDifficultyEV(strategy, bossDifficulty);
+  const strategy = calculateStrategy(template, board, hand, potSize, rng);
 
   const explanation = buildExplanation(template, board, hand, strategy);
 
