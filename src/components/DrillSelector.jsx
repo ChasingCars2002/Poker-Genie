@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Target, Shield, Layers, TrendingUp, Swords, Zap, Sparkles, ChevronRight, Trophy, Flame } from 'lucide-react';
+import { Target, Shield, Layers, TrendingUp, Swords, Zap, Sparkles, ChevronRight, Trophy, Flame, Repeat, Crosshair } from 'lucide-react';
 import { loadProgress } from '../data/gtoData';
 
 const ICONS = {
@@ -9,6 +9,9 @@ const ICONS = {
   'trending-up': TrendingUp,
   swords: Swords,
   zap: Zap,
+  repeat: Repeat,
+  crosshair: Crosshair,
+  flame: Flame,
 };
 
 const DIFFICULTY_COLORS = {

@@ -5,7 +5,16 @@ import {
   streakMultiplier,
   shuffle,
   saveSessionResult,
+  randomSuitPermutation,
+  permuteScenarioSuits,
 } from '../data/gtoData';
+
+// Shuffle the drill's spots and re-skin each with a random suit permutation,
+// so repeat sessions deal visually different (but strategically identical) hands.
+function buildDeck(drillId) {
+  return shuffle(SCENARIOS[drillId] || [])
+    .map(s => permuteScenarioSuits(s, randomSuitPermutation()));
+}
 
 const initialStats = {
   handsPlayed: 0,
@@ -17,7 +26,7 @@ const initialStats = {
 };
 
 export function useTrainer(drillId) {
-  const [deck, setDeck] = useState(() => shuffle(SCENARIOS[drillId] || []));
+  const [deck, setDeck] = useState(() => buildDeck(drillId));
   const [currentIndex, setCurrentIndex] = useState(0);
   const [stats, setStats] = useState(initialStats);
   const [feedback, setFeedback] = useState(null);
@@ -83,7 +92,7 @@ export function useTrainer(drillId) {
   }, [phase, currentIndex, deck.length, drillId, stats, score, bestStreak]);
 
   const restart = useCallback(() => {
-    setDeck(shuffle(SCENARIOS[drillId] || []));
+    setDeck(buildDeck(drillId));
     setCurrentIndex(0);
     setStats(initialStats);
     setFeedback(null);
