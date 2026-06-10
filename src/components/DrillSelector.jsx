@@ -1,11 +1,14 @@
 import { motion } from 'framer-motion';
-import { Target, Shield, Layers, ShieldAlert, Sparkles, ChevronRight } from 'lucide-react';
+import { Target, Shield, Layers, TrendingUp, Swords, Zap, Sparkles, ChevronRight, Trophy, Flame } from 'lucide-react';
+import { loadProgress } from '../data/gtoData';
 
 const ICONS = {
   target: Target,
   shield: Shield,
   layers: Layers,
-  'shield-alert': ShieldAlert,
+  'trending-up': TrendingUp,
+  swords: Swords,
+  zap: Zap,
 };
 
 const DIFFICULTY_COLORS = {
@@ -15,23 +18,37 @@ const DIFFICULTY_COLORS = {
 };
 
 export default function DrillSelector({ drills, onSelect }) {
+  const progress = loadProgress();
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-12"
+        className="text-center mb-10"
       >
-        <div className="flex items-center justify-center gap-3 mb-4">
+        <div className="flex items-center justify-center gap-3 mb-3">
           <Sparkles className="text-gold" size={32} />
           <h1 className="text-4xl sm:text-5xl font-extrabold bg-gradient-to-r from-gold via-amber-300 to-yellow-500 bg-clip-text text-transparent">
             Poker Genie
           </h1>
         </div>
-        <p className="text-gray-400 text-lg max-w-md mx-auto">
-          GTO Trainer — Master poker strategy with human-centric learning
+        <p className="text-gray-400 text-lg max-w-md mx-auto mb-4">
+          GTO Trainer — pick a drill, beat your best
         </p>
+        {(progress.totalXP > 0 || progress.bestStreak > 0) && (
+          <div className="flex items-center justify-center gap-5 text-sm">
+            <span className="flex items-center gap-1.5 text-gold">
+              <Trophy size={14} /> <span className="font-mono font-bold">{progress.totalXP.toLocaleString()}</span>
+              <span className="text-gray-500 text-xs">XP</span>
+            </span>
+            <span className="flex items-center gap-1.5 text-orange-300">
+              <Flame size={14} /> <span className="font-mono font-bold">{progress.bestStreak}</span>
+              <span className="text-gray-500 text-xs">best streak</span>
+            </span>
+          </div>
+        )}
       </motion.div>
 
       {/* Drill Grid */}
@@ -39,13 +56,14 @@ export default function DrillSelector({ drills, onSelect }) {
         {drills.map((drill, i) => {
           const Icon = ICONS[drill.icon] || Target;
           const diffClass = DIFFICULTY_COLORS[drill.difficulty] || DIFFICULTY_COLORS.Beginner;
+          const best = progress.drills[drill.id];
 
           return (
             <motion.button
               key={drill.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08, type: 'spring', stiffness: 200 }}
+              transition={{ delay: i * 0.07, type: 'spring', stiffness: 200 }}
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => onSelect(drill.id)}
@@ -67,7 +85,9 @@ export default function DrillSelector({ drills, onSelect }) {
               </p>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-600">
-                  {drill.heroPosition} vs {drill.villainPosition} • {drill.potType}
+                  {best
+                    ? <span className="text-gray-500">Best: <span className="text-gold font-mono">{best.bestScore.toLocaleString()}</span> · <span className="font-mono">{best.bestAccuracy}%</span></span>
+                    : `${drill.heroPosition} vs ${drill.villainPosition} • ${drill.potType}`}
                 </span>
                 <ChevronRight size={16} className="text-gray-600 group-hover:text-gold group-hover:translate-x-1 transition-all" />
               </div>
@@ -81,9 +101,9 @@ export default function DrillSelector({ drills, onSelect }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
-        className="mt-12 text-xs text-gray-600 text-center"
+        className="mt-10 text-xs text-gray-600 text-center max-w-md"
       >
-        Strategies simplified to human-memorizable frequencies (0/25/50/75/100%)
+        Frequencies simplified to 0/25/50/75/100%. Any action the solver actually mixes counts as correct — that&apos;s how GTO works.
       </motion.p>
     </div>
   );

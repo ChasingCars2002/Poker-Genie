@@ -1,98 +1,120 @@
 import { useState, useCallback, useMemo } from 'react';
-import { SCENARIOS, EXPLOITS, calculateEVLoss, classifyEVLoss } from '../data/gtoData';
+import {
+  SCENARIOS,
+  gradeAction,
+  streakMultiplier,
+  shuffle,
+  saveSessionResult,
+} from '../data/gtoData';
 
 const initialStats = {
   handsPlayed: 0,
-  perfectPlays: 0,
+  perfect: 0,
+  good: 0,
   inaccuracies: 0,
   blunders: 0,
   totalEVLoss: 0,
 };
 
 export function useTrainer(drillId) {
-  const scenarios = useMemo(() => SCENARIOS[drillId] || [], [drillId]);
-
+  const [deck, setDeck] = useState(() => shuffle(SCENARIOS[drillId] || []));
   const [currentIndex, setCurrentIndex] = useState(0);
   const [stats, setStats] = useState(initialStats);
   const [feedback, setFeedback] = useState(null);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [exploit, setExploit] = useState(null);
-  const [history, setHistory] = useState([]);
+  const [phase, setPhase] = useState('acting'); // 'acting' | 'feedback' | 'summary'
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [score, setScore] = useState(0);
+  const [summary, setSummary] = useState(null);
 
-  const currentScenario = scenarios[currentIndex] || null;
-
-  const activeStrategy = useMemo(() => {
-    if (!currentScenario) return null;
-    const base = currentScenario.gtoStrategy;
-    if (exploit && EXPLOITS[exploit]) {
-      return EXPLOITS[exploit].adjust(base);
-    }
-    return base;
-  }, [currentScenario, exploit]);
+  const currentScenario = deck[currentIndex] || null;
+  const strategy = currentScenario?.gtoStrategy || null;
 
   const handleAction = useCallback((chosenAction) => {
-    if (!activeStrategy || showFeedback) return;
+    if (!strategy || phase !== 'acting') return;
 
-    const evLoss = calculateEVLoss(activeStrategy, chosenAction);
-    const classification = classifyEVLoss(evLoss);
-    const chosenActionData = activeStrategy.actions.find(a => a.action === chosenAction);
-    const bestActionData = activeStrategy.actions.reduce((best, a) => a.ev > best.ev ? a : best, activeStrategy.actions[0]);
+    const result = gradeAction(strategy, chosenAction);
+    const correct = result.grade === 'perfect' || result.grade === 'good';
+    const newStreak = correct ? streak + 1 : 0;
+    const points = Math.round(result.points * streakMultiplier(streak));
 
-    const result = {
+    setStreak(newStreak);
+    setBestStreak(prev => Math.max(prev, newStreak));
+    setScore(prev => prev + points);
+    setFeedback({
       chosenAction,
-      chosenEV: chosenActionData?.ev ?? 0,
-      bestAction: bestActionData.action,
-      bestEV: bestActionData.ev,
-      evLoss: Math.round(evLoss * 100) / 100,
-      classification,
-      strategy: activeStrategy,
+      ...result,
+      points,
+      strategy,
       scenario: currentScenario,
-    };
-
-    setFeedback(result);
-    setShowFeedback(true);
-    setHistory(prev => [...prev, result]);
+    });
+    setPhase('feedback');
 
     setStats(prev => ({
       handsPlayed: prev.handsPlayed + 1,
-      perfectPlays: prev.perfectPlays + (classification.grade === 'perfect' || classification.grade === 'acceptable' ? 1 : 0),
-      inaccuracies: prev.inaccuracies + (classification.grade === 'inaccuracy' ? 1 : 0),
-      blunders: prev.blunders + (classification.grade === 'blunder' ? 1 : 0),
-      totalEVLoss: Math.round((prev.totalEVLoss + evLoss) * 100) / 100,
+      perfect: prev.perfect + (result.grade === 'perfect' ? 1 : 0),
+      good: prev.good + (result.grade === 'good' ? 1 : 0),
+      inaccuracies: prev.inaccuracies + (result.grade === 'inaccuracy' ? 1 : 0),
+      blunders: prev.blunders + (result.grade === 'blunder' ? 1 : 0),
+      totalEVLoss: Math.round((prev.totalEVLoss + result.evLoss) * 100) / 100,
     }));
-  }, [activeStrategy, showFeedback, currentScenario]);
+  }, [strategy, phase, streak, currentScenario]);
 
   const nextHand = useCallback(() => {
-    setShowFeedback(false);
+    if (phase !== 'feedback') return;
     setFeedback(null);
-    setCurrentIndex(prev => (prev + 1) % scenarios.length);
-  }, [scenarios.length]);
 
-  const resetDrill = useCallback(() => {
+    if (currentIndex + 1 >= deck.length) {
+      // Session complete — persist bests and show summary
+      const finalAccuracy = stats.handsPlayed > 0
+        ? Math.round(((stats.perfect + stats.good) / stats.handsPlayed) * 100)
+        : 0;
+      const { newRecord } = saveSessionResult(drillId, {
+        score,
+        accuracy: finalAccuracy,
+        streak: bestStreak,
+      });
+      setSummary({ stats, score, bestStreak, accuracy: finalAccuracy, newRecord });
+      setPhase('summary');
+    } else {
+      setCurrentIndex(prev => prev + 1);
+      setPhase('acting');
+    }
+  }, [phase, currentIndex, deck.length, drillId, stats, score, bestStreak]);
+
+  const restart = useCallback(() => {
+    setDeck(shuffle(SCENARIOS[drillId] || []));
     setCurrentIndex(0);
     setStats(initialStats);
     setFeedback(null);
-    setShowFeedback(false);
-    setHistory([]);
-  }, []);
+    setPhase('acting');
+    setStreak(0);
+    setBestStreak(0);
+    setScore(0);
+    setSummary(null);
+  }, [drillId]);
 
-  const toggleExploit = useCallback((exploitId) => {
-    setExploit(prev => prev === exploitId ? null : exploitId);
-  }, []);
+  const accuracy = useMemo(() => (
+    stats.handsPlayed > 0
+      ? Math.round(((stats.perfect + stats.good) / stats.handsPlayed) * 100)
+      : null
+  ), [stats]);
 
   return {
     currentScenario,
-    activeStrategy,
+    strategy,
     feedback,
-    showFeedback,
+    phase,
     stats,
-    history,
-    exploit,
+    streak,
+    bestStreak,
+    score,
+    accuracy,
+    summary,
     handleAction,
     nextHand,
-    resetDrill,
-    toggleExploit,
-    scenarioCount: scenarios.length,
+    restart,
+    scenarioCount: deck.length,
     currentIndex,
   };
 }
