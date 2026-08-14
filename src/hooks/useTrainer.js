@@ -26,6 +26,53 @@ const initialSessionStats = {
 // in a mode that is now explicitly designed to be played indefinitely.
 const MAX_SESSION_RESULTS = 200;
 
+/**
+ * Prepare a handwritten scenario for play. Handwritten scenarios carry no
+ * concept tags of their own, so they are read off the cards here — otherwise a
+ * quarter of every session would go unmeasured by the mastery model.
+ */
+function tagCurated(scenario) {
+  return {
+    ...scenario,
+    concepts: conceptsForScenario(scenario),
+    _meta: { ...scenario._meta, curated: true, difficulty: 5 },
+  };
+}
+
+/**
+ * Choose the first hand of a session, plus the curated deck the rest will draw
+ * from.
+ *
+ * This cannot go through the hook's nextScenario(): that reads the curated deck
+ * ref, and it runs from a lazy initialiser during render, where refs are off
+ * limits. It still has to honour curatedOnly. Going straight to
+ * generateScenario meant the opening hand of a curated-only drill came from the
+ * procedural pool — and because curatedOnly is deliberately not a template
+ * filter, that pool is the entire library. Opening Multiway Pot Navigation
+ * dealt a heads-up spot under a multiway label, the exact failure the flag
+ * exists to prevent.
+ *
+ * The deck is built here alongside the first hand so hand one comes from the
+ * same shuffle as everything after it and cannot immediately repeat itself.
+ *
+ * Exported for testing — the hook itself needs a DOM, this does not.
+ */
+export function openingHand(profile, curatedSource, progress) {
+  const deck = curatedSource.length > 0 ? shuffled(curatedSource) : [];
+
+  if (profile.curatedOnly && deck.length > 0) {
+    return { scenario: tagCurated(deck.pop()), deck };
+  }
+
+  return {
+    scenario: generateScenario(nextDifficulty(progress.skillRating), {
+      profile,
+      concepts: progress.reviewQueue,
+    }),
+    deck,
+  };
+}
+
 function shuffled(arr) {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
@@ -68,13 +115,7 @@ export function useTrainer(drillId) {
 
     if (curatedSource.length > 0 && Math.random() < curatedWeight) {
       const scenario = drawCurated();
-      if (scenario) {
-        return {
-          ...scenario,
-          concepts: conceptsForScenario(scenario),
-          _meta: { ...scenario._meta, curated: true, difficulty: 5 },
-        };
-      }
+      if (scenario) return tagCurated(scenario);
     }
 
     return generateScenario(nextDifficulty(current.skillRating), {
@@ -83,16 +124,9 @@ export function useTrainer(drillId) {
     });
   }, [profile, curatedSource, drawCurated]);
 
-  // The first hand comes straight from the adaptive generator rather than
-  // through nextScenario(), which reads the curated deck ref — refs must not be
-  // touched during render, and a lazy initialiser runs during render.
-  const [currentScenario, setCurrentScenario] = useState(() => {
-    const current = getProgress();
-    return generateScenario(nextDifficulty(current.skillRating), {
-      profile,
-      concepts: current.reviewQueue,
-    });
-  });
+  const [firstHand] = useState(() => openingHand(profile, curatedSource, getProgress()));
+
+  const [currentScenario, setCurrentScenario] = useState(firstHand.scenario);
   const [stats, setStats] = useState(initialSessionStats);
   const [feedback, setFeedback] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -104,11 +138,16 @@ export function useTrainer(drillId) {
   const popupTimer = useRef(null);
 
   useEffect(() => {
+    // Seed the deck here rather than in the initialiser above — writing a ref
+    // during render would run twice under StrictMode and shuffle twice.
+    curatedDeck.current = firstHand.deck;
     updateProgress(p => applySessionStart(p));
     return () => {
       if (popupTimer.current) clearTimeout(popupTimer.current);
     };
-  }, []);
+    // firstHand comes from useState with no setter, so it never changes and
+    // this still runs exactly once per session.
+  }, [firstHand.deck]);
 
   // Switching drills gets a clean session by remounting: App keys TrainerView
   // on the drill id. Resetting the state from an effect instead would render

@@ -1137,9 +1137,14 @@ export function classifyEVLoss(evLoss) {
  */
 export function gradeAction(gtoStrategy, chosenAction) {
   const evLoss = calculateEVLoss(gtoStrategy, chosenAction);
-  const inMix = (gtoStrategy.acceptableActions || [])
-    .concat(gtoStrategy.actions.filter(a => a.frequency > 0).map(a => a.action))
-    .includes(chosenAction);
+
+  // Read the mix off the live frequencies, never off a cached `acceptableActions`
+  // list. The exploit adjusters in EXPLOITS spread `...strategy` — carrying that
+  // list through unchanged — and then rewrite the frequencies underneath it. So
+  // `overFoldCbet` can drop a check from 25% to 0% while the stale list still
+  // names it, and an action the adjusted strategy says never to take would be
+  // promoted to "Acceptable". The frequencies are the single source of truth.
+  const inMix = gtoStrategy.actions.some(a => a.action === chosenAction && a.frequency > 0);
 
   const classification = classifyEVLoss(evLoss);
   if (inMix && (classification.grade === 'inaccuracy' || classification.grade === 'blunder')) {

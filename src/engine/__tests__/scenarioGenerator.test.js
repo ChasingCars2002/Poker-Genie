@@ -104,6 +104,18 @@ describe('drill profiles', () => {
     }
   });
 
+  it('cannot satisfy a curatedOnly drill from the procedural pool', () => {
+    // curatedOnly is deliberately NOT a template filter, so any code path that
+    // reaches generateScenario for such a drill gets the entire library — a
+    // heads-up hand under a multiway label. This asserts the property that
+    // makes that dangerous, so the guarantee has to live in the caller.
+    for (const [drillId, profile] of Object.entries(DRILL_PROFILES)) {
+      if (!profile.curatedOnly) continue;
+      const matches = SCENARIO_TEMPLATES.filter(t => templateMatchesProfile(t, profile));
+      expect(matches.length, `${drillId} unexpectedly filters templates`).toBe(SCENARIO_TEMPLATES.length);
+    }
+  });
+
   it('respects the drill constraints when generating', () => {
     const profile = DRILL_PROFILES['cbet-monotone'];
     for (let i = 0; i < 100; i++) {

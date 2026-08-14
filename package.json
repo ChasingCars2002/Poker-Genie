@@ -9,6 +9,9 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "build:equity": "node scripts/buildEquityTable.mjs",
+    "verify:evaluator": "node scripts/verifyEvaluator.mjs",
+    "verify:equity": "node scripts/exactEquity.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

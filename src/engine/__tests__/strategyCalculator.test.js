@@ -171,6 +171,46 @@ describe('calculateEVLoss', () => {
   });
 });
 
+describe('gradeAction reads the live mix', () => {
+  it('grades an action the strategy still plays as correct', () => {
+    const strategy = {
+      actions: [
+        { action: 'check', frequency: 50, ev: 3.0 },
+        { action: 'bet33', frequency: 50, ev: 3.0 },
+      ],
+    };
+    expect(gradeAction(strategy, 'check').classification.grade).not.toBe('blunder');
+  });
+
+  it('ignores a stale acceptableActions list after an exploit adjustment', () => {
+    // EXPLOITS adjusters spread `...strategy`, carrying acceptableActions
+    // through unchanged, then rewrite the frequencies underneath it. Trusting
+    // the stale list promoted an action the adjusted strategy now never takes
+    // to "Acceptable" — rewarding exactly the mistake the exploit teaches
+    // against.
+    const adjusted = {
+      acceptableActions: ['check', 'bet33'], // stale: from before the adjustment
+      actions: [
+        { action: 'check', frequency: 0, ev: 1.0 },   // exploit dropped this to 0%
+        { action: 'bet33', frequency: 100, ev: 3.0 },
+      ],
+    };
+
+    const { classification } = gradeAction(adjusted, 'check');
+    expect(['inaccuracy', 'blunder']).toContain(classification.grade);
+  });
+
+  it('still upgrades a genuinely in-mix action that lost on EV alone', () => {
+    const strategy = {
+      actions: [
+        { action: 'check', frequency: 25, ev: 1.0 },  // in the mix, but far behind on EV
+        { action: 'bet33', frequency: 75, ev: 3.0 },
+      ],
+    };
+    expect(gradeAction(strategy, 'check').classification.grade).toBe('acceptable');
+  });
+});
+
 describe('classifyEVLoss boundaries', () => {
   it('grades on the documented thresholds', () => {
     expect(classifyEVLoss(0).grade).toBe('perfect');
