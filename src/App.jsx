@@ -4,6 +4,7 @@ import DrillSelector from './components/DrillSelector';
 import TrainerView from './components/TrainerView';
 import ArenaView from './components/ArenaView';
 import WeeklyReport from './components/WeeklyReport';
+import PreflopView from './components/PreflopView';
 import { DRILLS } from './data/gtoData';
 
 const TRANSITION = { duration: 0.25 };
@@ -29,6 +30,7 @@ function App() {
   const handleSelect = (id) => {
     if (id === 'arena') setActiveMode({ type: 'arena' });
     else if (id === 'weekly') setActiveMode({ type: 'weekly' });
+    else if (id === 'preflop') setActiveMode({ type: 'preflop' });
     else setActiveMode({ type: 'drill', id });
   };
 
@@ -36,6 +38,8 @@ function App() {
     <AnimatePresence mode="wait">
       {activeMode?.type === 'arena' ? (
         <Screen id="arena" from={20}><ArenaView onBack={back} /></Screen>
+      ) : activeMode?.type === 'preflop' ? (
+        <Screen id="preflop" from={20}><PreflopView onBack={back} /></Screen>
       ) : activeMode?.type === 'weekly' ? (
         <Screen id="weekly" from={20}><WeeklyReport onBack={back} /></Screen>
       ) : activeMode?.type === 'drill' ? (

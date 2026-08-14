@@ -128,7 +128,7 @@ export function selectTemplatePool({ difficulty = 5, profile = {}, concepts = []
   if (concepts.length > 0) {
     const targeted = base.filter(t => {
       const c = conceptsOf(t);
-      return concepts.includes(c.primary) || concepts.includes(c.texture);
+      return concepts.includes(c.primary) || concepts.includes(c.secondary);
     });
     if (targeted.length > 0) return targeted;
   }

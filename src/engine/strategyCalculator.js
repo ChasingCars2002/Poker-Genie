@@ -156,7 +156,7 @@ function mistakeGapFor(difficulty) {
  * @param {number} baseEV EV of the best line, in BB
  * @param {number} difficulty 1-10
  */
-function assignEVs(actions, baseEV, difficulty) {
+export function assignEVs(actions, baseEV, difficulty) {
   const played = actions.filter(a => a.frequency > 0);
   if (played.length === 0) return actions.map(a => ({ ...a, ev: round2(baseEV) }));
 

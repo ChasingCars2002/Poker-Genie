@@ -28,6 +28,11 @@ function boardName(board) {
 }
 
 function boardTextureName(board) {
+  // Guarded because buildExplanation evaluates this as a call argument, so it
+  // runs for every template whether or not the text mentions texture. An
+  // exception here would blank the entire screen.
+  if (!board?.flop?.length) return 'no board yet';
+
   const suits = board.flop.map(c => c[c.length - 1]);
   const uniqueSuits = new Set(suits).size;
 

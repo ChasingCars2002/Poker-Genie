@@ -29,7 +29,7 @@ export function applyAnswer(progress, {
   // Both the decision concept and the board-texture concept get credited —
   // they fail independently and want separate review schedules.
   const nextConcepts = { ...progress.concepts };
-  for (const conceptId of [concepts?.primary, concepts?.texture].filter(Boolean)) {
+  for (const conceptId of [concepts?.primary, concepts?.secondary].filter(Boolean)) {
     nextConcepts[conceptId] = recordAttempt(nextConcepts[conceptId], {
       isCorrect,
       evLoss,

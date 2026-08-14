@@ -9,7 +9,7 @@ import { SCENARIOS } from '../../data/gtoData';
 function allCardsOf(scenario) {
   const { board, heroHand } = scenario;
   return [
-    ...board.flop,
+    ...(board.flop || []), // preflop scenarios have no board
     ...(board.turn ? [board.turn] : []),
     ...(board.river ? [board.river] : []),
     ...heroHand,
@@ -39,7 +39,7 @@ describe('generated scenarios are legal', () => {
   });
 
   it('deals the right number of board cards for the street', () => {
-    const expected = { flop: 3, turn: 4, river: 5 };
+    const expected = { preflop: 0, flop: 3, turn: 4, river: 5 };
     for (let i = 0; i < 300; i++) {
       const scenario = generateScenario(1 + (i % 10));
       const boardCount = allCardsOf(scenario).length - 2;
@@ -59,7 +59,7 @@ describe('generated scenarios are legal', () => {
     for (let i = 0; i < 200; i++) {
       const { concepts } = generateScenario(1 + (i % 10));
       expect(CONCEPT_INFO[concepts.primary], `unknown concept ${concepts.primary}`).toBeDefined();
-      expect(CONCEPT_INFO[concepts.texture], `unknown concept ${concepts.texture}`).toBeDefined();
+      expect(CONCEPT_INFO[concepts.secondary], `unknown concept ${concepts.secondary}`).toBeDefined();
     }
   });
 });
@@ -71,10 +71,16 @@ describe('facing-bet scenarios', () => {
     expect(defendTemplates.length).toBeGreaterThan(0);
   });
 
-  it('always offer a fold, and only they do', () => {
+  it('offer a fold exactly when hero is facing a bet', () => {
+    // Phrased on "facing a bet" rather than on decisionMode. The old wording
+    // coupled the fold option to a postflop-only flag, which preflop breaks:
+    // hero always faces the blinds, so a preflop fold is legal without hero
+    // being in a postflop "defend" template. What must stay true is the real
+    // rule — no fold button unless there is something to fold to.
     for (const template of SCENARIO_TEMPLATES) {
       const hasFold = template.strategyShape.actions.some(a => a.action === 'fold');
-      expect(hasFold, template.id).toBe(template.decisionMode === 'defend');
+      const facingBet = template.facingBetSize > 0;
+      expect(hasFold, template.id).toBe(facingBet);
     }
   });
 

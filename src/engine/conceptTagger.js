@@ -13,6 +13,14 @@ export function conceptsForScenario(scenario) {
   if (scenario?.concepts) return scenario.concepts;
 
   const { heroHand, board, street, decisionMode } = scenario;
+
+  // Preflop scenarios carry their own tags and never reach here, but an
+  // untagged one would previously crash on board.flop.map — and an exception in
+  // concept tagging blanks the whole screen.
+  if (!board?.flop?.length) {
+    return { primary: `${street || 'preflop'}-untagged`, secondary: 'position-blinds' };
+  }
+
   const { category } = classifyHand(heroHand, board);
   const texture = getBoardTexture(board.flop);
 
@@ -25,6 +33,6 @@ export function conceptsForScenario(scenario) {
 
   return {
     primary: `${mode}-${street}-${handClassOf(category)}`,
-    texture: textureConceptOf(textureType),
+    secondary: textureConceptOf(textureType),
   };
 }

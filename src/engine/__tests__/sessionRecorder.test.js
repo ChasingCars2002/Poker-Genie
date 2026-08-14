@@ -3,7 +3,7 @@ import { applyAnswer, applyStreak, collectAchievements } from '../sessionRecorde
 import { emptyProgress, _internals } from '../../state/progressStore';
 import { isoWeekKey } from '../weeklyStats';
 
-const CONCEPTS = { primary: 'bet-flop-value', texture: 'texture-dry' };
+const CONCEPTS = { primary: 'bet-flop-value', secondary: 'texture-dry' };
 
 function answer(progress, overrides = {}) {
   return applyAnswer(progress, {
@@ -40,7 +40,7 @@ describe('applyAnswer', () => {
     expect(next.totalEVLoss).toBe(2.5);
   });
 
-  it('records both the decision concept and the texture concept', () => {
+  it('records both the decision concept and the board-texture concept', () => {
     const next = answer(base);
     expect(next.concepts['bet-flop-value'].attempts).toBe(1);
     expect(next.concepts['texture-dry'].attempts).toBe(1);
@@ -81,7 +81,7 @@ describe('applyAnswer', () => {
     let progress = answer(base, { grade: 'blunder', evLoss: 3 });
     // Play enough unrelated hands for the short interval to elapse.
     for (let i = 0; i < 4; i++) {
-      progress = answer(progress, { concepts: { primary: 'bet-river-air', texture: 'texture-wet' } });
+      progress = answer(progress, { concepts: { primary: 'bet-river-air', secondary: 'texture-wet' } });
     }
     expect(progress.reviewQueue).toContain('bet-flop-value');
   });

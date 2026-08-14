@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   Target, Shield, Layers, ShieldAlert, Sparkles, ChevronRight,
   Flame, Zap, Users, Crosshair, Star, Trophy, Swords,
-  Infinity as InfinityIcon, LineChart, AlertTriangle,
+  Infinity as InfinityIcon, LineChart, AlertTriangle, Calculator,
 } from 'lucide-react';
 import { getLevelForXP, ACHIEVEMENTS } from '../data/gtoData';
 import { DRILL_PROFILES } from '../data/drillProfiles';
@@ -139,6 +139,41 @@ export default function DrillSelector({ drills, onSelect }) {
             </span>
           </div>
         )}
+      </motion.button>
+
+      {/* Preflop Maths — the only mode whose numbers are computed rather than modelled */}
+      <motion.button
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.04, type: 'spring', stiffness: 200 }}
+        whileHover={{ scale: 1.02, y: -2 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => onSelect('preflop')}
+        className="w-full max-w-2xl text-left bg-gradient-to-br from-blue-950/60 to-cyan-950/60 hover:from-blue-900/60 hover:to-cyan-900/60 border border-blue-500/20 hover:border-blue-500/40 rounded-2xl p-5 mb-4 transition-all duration-200 shadow-lg hover:shadow-xl cursor-pointer group"
+      >
+        <div className="flex items-start justify-between mb-3">
+          <div className="p-2.5 rounded-xl bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
+            <Calculator size={22} className="text-blue-400" />
+          </div>
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full border border-green-500/30 text-green-400 bg-green-500/10 uppercase tracking-wider">
+            Computed
+          </span>
+        </div>
+        <h3 className="text-lg font-bold text-gray-100 mb-1.5 group-hover:text-white transition-colors">
+          Preflop Maths
+        </h3>
+        <p className="text-sm text-gray-400 leading-relaxed mb-3">
+          Defend the blinds using the arithmetic that actually decides it — your exact price against
+          your exact equity. Every number here is computed from a hand evaluator in this repo, not
+          copied from a chart.
+        </p>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-500 flex items-center gap-1.5">
+            <InfinityIcon size={11} className="text-gold/70" />
+            endless · 6-max 100bb
+          </span>
+          <ChevronRight size={16} className="text-gray-600 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
+        </div>
       </motion.button>
 
       {/* Arena Mode Card */}

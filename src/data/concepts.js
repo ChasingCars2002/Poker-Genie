@@ -49,7 +49,56 @@ export function primaryConceptOf(template) {
 export function conceptsOf(template) {
   return {
     primary: primaryConceptOf(template),
-    texture: textureConceptOf(template.boardTextureType),
+    // Named `secondary` rather than `texture` because preflop fills this slot
+    // with position instead — a field called `texture` holding
+    // 'position-blinds' is the kind of name that breeds bugs.
+    secondary: textureConceptOf(template.boardTextureType),
+  };
+}
+
+// ── Preflop ──────────────────────────────────────────────────────────────
+//
+// The postflop hand classes above are board-relative and mean nothing before a
+// flop, so preflop gets its own axis. The second slot carries position, which
+// is the preflop equivalent of board texture: the situation you are in, as
+// distinct from the decision you are making.
+
+const PREFLOP_HAND_CLASSES = {
+  premium: ['AA', 'KK', 'QQ', 'JJ', 'AKs', 'AKo', 'AQs'],
+  pair: ['TT', '99', '88', '77', '66', '55', '44', '33', '22'],
+};
+
+export function preflopHandClassOf(notation) {
+  if (PREFLOP_HAND_CLASSES.premium.includes(notation)) return 'premium';
+  if (PREFLOP_HAND_CLASSES.pair.includes(notation)) return 'pair';
+
+  const suited = notation.endsWith('s');
+  const [high, low] = notation;
+  const BROADWAY = 'AKQJT';
+
+  if (BROADWAY.includes(high) && BROADWAY.includes(low)) return 'broadway';
+  if (high === 'A' && suited) return 'suited-ace';
+
+  if (suited) {
+    const order = 'AKQJT98765432';
+    const gap = Math.abs(order.indexOf(high) - order.indexOf(low));
+    if (gap <= 2) return 'suited-connector';
+  }
+
+  return 'junk';
+}
+
+export function preflopPositionConceptOf(position) {
+  if (position === 'BB' || position === 'SB') return 'position-blinds';
+  if (position === 'BTN' || position === 'CO') return 'position-late';
+  return 'position-early';
+}
+
+/** Concepts for a preflop spot and the hand dealt into it. */
+export function preflopConceptsOf(spot, handNotation) {
+  return {
+    primary: `${spot.context}-${preflopHandClassOf(handNotation)}`,
+    secondary: preflopPositionConceptOf(spot.heroPosition),
   };
 }
 
@@ -172,6 +221,94 @@ export const CONCEPT_INFO = {
   'texture-paired': {
     label: 'Paired boards',
     tip: 'Paired boards reduce strong holdings for both players, which makes them great for cheap bluffs and terrible for big value bets.',
+  },
+
+  // ── Preflop decisions ──
+  'vs-open-premium': {
+    label: 'Premiums facing an open',
+    tip: 'Premium hands are never folding for one raise. The only question is whether calling or 3-betting makes more, and against a wide opener it is usually 3-betting.',
+  },
+  'vs-open-pair': {
+    label: 'Pocket pairs facing an open',
+    tip: 'Small pairs need a price and someone to pay you off when you flop a set — roughly one time in eight. Out of position with a short stack behind, they are a fold.',
+  },
+  'vs-open-broadway': {
+    label: 'Broadway hands facing an open',
+    tip: 'Broadway offsuit hands look pretty and are frequently dominated. KJo against a tight early open is exactly the hand that costs people money.',
+  },
+  'vs-open-suited-ace': {
+    label: 'Suited aces facing an open',
+    tip: 'Suited aces flop the nut flush draw and block their strongest hands. They defend far wider than their offsuit counterparts.',
+  },
+  'vs-open-suited-connector': {
+    label: 'Suited connectors facing an open',
+    tip: 'Great equity when they connect, and they connect rarely. They need a good price and position; from the small blind most of them are folds.',
+  },
+  'vs-open-junk': {
+    label: 'Weak hands facing an open',
+    tip: 'The big blind gets a wonderful price, but a wonderful price on a hand with no equity is still a losing call. Check the number rather than the discount.',
+  },
+  'vs-3bet-premium': {
+    label: 'Premiums facing a 3-bet',
+    tip: 'This is where stacks go in. Work out whether you are ahead of their 3-betting range, not just whether your hand looks strong.',
+  },
+  'vs-3bet-pair': {
+    label: 'Pocket pairs facing a 3-bet',
+    tip: 'Middling pairs are the classic 3-bet trap: too good to fold by feel, not good enough to call by maths. The price usually says fold.',
+  },
+  'vs-3bet-broadway': {
+    label: 'Broadway hands facing a 3-bet',
+    tip: 'Against a polarised 3-bet you are either crushed or well ahead. Offsuit broadway is on the wrong side of that split more often than it feels.',
+  },
+  'vs-3bet-suited-ace': {
+    label: 'Suited aces facing a 3-bet',
+    tip: 'Blocking their aces and ace-king matters a lot here — every combo you block is one fewer hand that has you dominated.',
+  },
+  'vs-3bet-suited-connector': {
+    label: 'Suited connectors facing a 3-bet',
+    tip: 'The price is much worse than defending a blind and you are usually out of position. Most of these are folds despite the pretty cards.',
+  },
+  'vs-3bet-junk': {
+    label: 'Weak hands facing a 3-bet',
+    tip: 'Fold. A 3-bet is a narrow, strong range and no price you are being offered fixes having nothing.',
+  },
+  'vs-jam-premium': {
+    label: 'Premiums facing an all-in',
+    tip: 'No streets left, so raw equity is the whole answer. Compare it to the price and act — nothing else is relevant.',
+  },
+  'vs-jam-pair': {
+    label: 'Pocket pairs facing an all-in',
+    tip: 'A pair is a favourite against two overcards and a huge underdog to a bigger pair. Which one it is against depends entirely on their jamming range.',
+  },
+  'vs-jam-broadway': {
+    label: 'Broadway hands facing an all-in',
+    tip: 'Against a tight jam these are dominated far more often than they are racing. Check the number rather than the picture.',
+  },
+  'vs-jam-suited-ace': {
+    label: 'Suited aces facing an all-in',
+    tip: 'The suit is worth about two or three points of equity. Against a wide jam that can be the whole difference.',
+  },
+  'vs-jam-suited-connector': {
+    label: 'Suited connectors facing an all-in',
+    tip: 'Never dominated, never a big favourite. Against a wide jamming range they hold up better than their reputation suggests.',
+  },
+  'vs-jam-junk': {
+    label: 'Weak hands facing an all-in',
+    tip: 'The price has to be extraordinary before a hand with no equity is a call. It almost never is.',
+  },
+
+  // ── Preflop positions ──
+  'position-blinds': {
+    label: 'Playing the blinds',
+    tip: 'You have money in already, which improves the price and tempts you to over-defend. You will also be out of position for the entire hand, which is what makes those calls expensive.',
+  },
+  'position-late': {
+    label: 'Playing in position',
+    tip: 'Acting last is worth real equity — you realise more of your hand than the same cards would from the blinds. Widen accordingly.',
+  },
+  'position-early': {
+    label: 'Playing from early position',
+    tip: 'With several players still to act you need a hand that can stand pressure. This is the seat where discipline is worth the most.',
   },
 };
 
