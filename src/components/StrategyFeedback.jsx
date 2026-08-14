@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, AlertTriangle, XCircle, Info, ArrowRight, BarChart3, Trophy } from 'lucide-react';
+import { CheckCircle, AlertTriangle, XCircle, Info, ArrowRight, BarChart3, Trophy, GraduationCap } from 'lucide-react';
 import { LOGIC_TAGS, simplifyFrequency } from '../data/gtoData';
+import { conceptLabel, conceptTip } from '../data/concepts';
 
 const GRADE_ICONS = {
   perfect: CheckCircle,
@@ -20,7 +21,7 @@ function FrequencyBar({ action, frequency, ev, isChosen, isBest }) {
   const simplified = simplifyFrequency(frequency);
   return (
     <div className={`flex items-center gap-3 py-2 px-3 rounded-lg ${isChosen ? 'bg-white/5 ring-1 ring-white/10' : ''}`}>
-      <div className="w-20 text-sm font-medium text-gray-300 shrink-0">
+      <div className="w-24 text-sm font-medium text-gray-300 shrink-0">
         {action.label || action.action}
         {isBest && <span className="ml-1 text-xs text-green-400">*</span>}
       </div>
@@ -44,12 +45,24 @@ function FrequencyBar({ action, frequency, ev, isChosen, isBest }) {
   );
 }
 
-export default function StrategyFeedback({ feedback, onNext, isLastHand }) {
+export default function StrategyFeedback({ feedback, onNext, isLastHand = false }) {
   if (!feedback) return null;
 
-  const { chosenAction, bestAction, evLoss, classification, strategy, score, xpGained, streakBonus } = feedback;
+  const { chosenAction, bestAction, evLoss, classification, strategy, score, xpGained, concepts } = feedback;
   const GradeIcon = GRADE_ICONS[classification.grade];
   const bgClass = GRADE_BG[classification.grade];
+
+  const mixedActions = strategy.actions.filter(a => a.frequency > 0);
+  const isMixed = mixedActions.length > 1;
+  const playedTheMix = mixedActions.some(a => a.action === chosenAction);
+
+  // Only surface a coaching tip when there is something to fix. Reading why
+  // you were wrong is where the learning is; reading it after a correct answer
+  // just trains people to skip the box.
+  const tipConcept = classification.grade === 'inaccuracy' || classification.grade === 'blunder'
+    ? concepts?.primary
+    : null;
+  const tip = tipConcept ? conceptTip(tipConcept) : '';
 
   return (
     <AnimatePresence>
@@ -92,10 +105,17 @@ export default function StrategyFeedback({ feedback, onNext, isLastHand }) {
 
         {/* Strategy Breakdown */}
         <div className="mb-5">
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-2">
             <BarChart3 size={16} className="text-gray-400" />
             <h4 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Strategy Breakdown</h4>
           </div>
+          {isMixed && (
+            <p className="text-xs text-gray-500 mb-3 leading-relaxed">
+              This is a mixed spot — every line below with a non-zero frequency is part of the
+              equilibrium, so {playedTheMix ? 'your choice was one of them' : 'any of them would have been fine'}.
+              The lines at 0% are the ones that actually cost you.
+            </p>
+          )}
           <div className="space-y-1">
             {strategy.actions.map(a => (
               <FrequencyBar
@@ -138,6 +158,27 @@ export default function StrategyFeedback({ feedback, onNext, isLastHand }) {
         <div className="bg-surface-900/50 rounded-xl p-4 border border-white/5">
           <p className="text-sm text-gray-300 leading-relaxed">{strategy.explanation}</p>
         </div>
+
+        {/* Coaching tip — only on mistakes, tied to the concept being tracked */}
+        {tip && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="mt-3 bg-gold/5 rounded-xl p-4 border border-gold/20"
+          >
+            <div className="flex items-center gap-2 mb-1.5">
+              <GraduationCap size={14} className="text-gold" />
+              <span className="text-xs font-semibold text-gold uppercase tracking-wider">
+                {conceptLabel(tipConcept)}
+              </span>
+            </div>
+            <p className="text-sm text-gray-300 leading-relaxed">{tip}</p>
+            <p className="mt-2 text-xs text-gray-500">
+              Queued for review — this spot will come back.
+            </p>
+          </motion.div>
+        )}
       </motion.div>
     </AnimatePresence>
   );

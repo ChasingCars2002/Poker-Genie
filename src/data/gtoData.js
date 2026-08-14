@@ -937,7 +937,7 @@ export const SCENARIOS = {
         ],
         bestAction: 'bet75',
         logicTags: ['BLUFF_CANDIDATE', 'BLOCKER_EFFECT'],
-        explanation: 'KQo with Qd — we block the second nut flush! The J river also gives us a straight. Actually KQ makes a straight here (K-Q-J-T-9? No, Q-J-T-9-8? No). We have Q-high with a flush blocker. Big bluff — Qd blocks flushes, making it harder for BB to call.',
+        explanation: 'Board is Td 8d 3s 6d Jc. KQo missed everything — we need a 9 for Q-J-T-9 and never got there, so this is king-high with no showdown value. What it does have is the Qd, blocking the second nut flush and a chunk of BB\'s calling range. That combination — no showdown value plus a blocker to their strong hands — is exactly the profile of a good river bluff. Bet large.',
       },
     },
   ],
@@ -1126,9 +1126,46 @@ export function classifyEVLoss(evLoss) {
   return { label: 'Blunder', grade: 'blunder', color: '#ef4444' };
 }
 
+/**
+ * Grade a chosen action against a strategy.
+ *
+ * When the strategy mixes — say check 50% / bet 50% — both actions are part of
+ * the equilibrium and neither is a mistake. Grading purely on an EV difference
+ * of a hundredth of a big blind would mark one of them wrong and teach a
+ * precision that does not exist. Any action the solver plays at all grades as
+ * at least Acceptable; only the actions it never plays are errors.
+ */
+export function gradeAction(gtoStrategy, chosenAction) {
+  const evLoss = calculateEVLoss(gtoStrategy, chosenAction);
+
+  // Read the mix off the live frequencies, never off a cached `acceptableActions`
+  // list. The exploit adjusters in EXPLOITS spread `...strategy` — carrying that
+  // list through unchanged — and then rewrite the frequencies underneath it. So
+  // `overFoldCbet` can drop a check from 25% to 0% while the stale list still
+  // names it, and an action the adjusted strategy says never to take would be
+  // promoted to "Acceptable". The frequencies are the single source of truth.
+  const inMix = gtoStrategy.actions.some(a => a.action === chosenAction && a.frequency > 0);
+
+  const classification = classifyEVLoss(evLoss);
+  if (inMix && (classification.grade === 'inaccuracy' || classification.grade === 'blunder')) {
+    return { evLoss, classification: classifyEVLoss(0.25) };
+  }
+  return { evLoss, classification };
+}
+
 export function calculateEVLoss(gtoStrategy, chosenAction) {
-  const bestEV = Math.max(...gtoStrategy.actions.map(a => a.ev));
-  const chosenEV = gtoStrategy.actions.find(a => a.action === chosenAction)?.ev ?? 0;
+  const evs = gtoStrategy.actions.map(a => a.ev);
+  const bestEV = Math.max(...evs);
+  const chosen = gtoStrategy.actions.find(a => a.action === chosenAction);
+
+  // An action the strategy does not define cannot be scored against it. This
+  // used to default to an EV of 0, which quietly turned "unknown action" into
+  // "worth exactly nothing" — and since the UI injected a Fold button on every
+  // hand, that fake zero was doing most of the grading on folds. Falling back
+  // to the worst defined action at least keeps the scale honest if a new
+  // action ever reaches here unmapped.
+  const chosenEV = chosen ? chosen.ev : Math.min(...evs);
+
   return Math.max(0, bestEV - chosenEV);
 }
 

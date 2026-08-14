@@ -10,7 +10,7 @@ const MULTIPLIER_COLORS = {
   5: 'text-gold',
 };
 
-export default function ArenaHUD({ lives, floor, handOnFloor, handsPerFloor, multiplier, runScore, isBossHand, consecutiveCorrect }) {
+export default function ArenaHUD({ lives, floor, handOnFloor, handsPerFloor, multiplier, runScore, isBossHand }) {
   const multiplierColor = MULTIPLIER_COLORS[multiplier] || 'text-gray-400';
   const isMaxMultiplier = multiplier >= 5;
 

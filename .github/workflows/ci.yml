@@ -1,0 +1,23 @@
+name: CI
+
+# The only existing workflow deploys to Pages on push to specific branches, so
+# nothing validated a pull request. Now that there is a test suite, this runs it
+# where it can actually block a regression.
+on:
+  pull_request:
+  push:
+    branches: [main, claude/poker-gto-trainer-nr6Yu]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build

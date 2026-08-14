@@ -8,12 +8,6 @@ const RANK_NAMES = {
 
 const SUIT_NAMES = { 's': 'spades', 'h': 'hearts', 'd': 'diamonds', 'c': 'clubs' };
 
-function cardName(card) {
-  const rank = card.slice(0, -1);
-  const suit = card[card.length - 1];
-  return `${RANK_NAMES[rank] || rank} of ${SUIT_NAMES[suit] || suit}`;
-}
-
 function handName(hand) {
   const r1 = hand[0].slice(0, -1);
   const r2 = hand[1].slice(0, -1);
@@ -34,6 +28,11 @@ function boardName(board) {
 }
 
 function boardTextureName(board) {
+  // Guarded because buildExplanation evaluates this as a call argument, so it
+  // runs for every template whether or not the text mentions texture. An
+  // exception here would blank the entire screen.
+  if (!board?.flop?.length) return 'no board yet';
+
   const suits = board.flop.map(c => c[c.length - 1]);
   const uniqueSuits = new Set(suits).size;
 

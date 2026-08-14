@@ -8,29 +8,35 @@ const ACTION_CONFIG = {
   bet33: { label: 'Bet 33%', color: 'bg-accent-blue', hoverColor: 'hover:bg-blue-500', icon: TrendingUp, textColor: 'text-white' },
   bet75: { label: 'Bet 75%', color: 'bg-accent-purple', hoverColor: 'hover:bg-purple-500', icon: TrendingUp, textColor: 'text-white' },
   betPot: { label: 'Bet Pot', color: 'bg-amber-600', hoverColor: 'hover:bg-amber-500', icon: TrendingUp, textColor: 'text-white' },
+  raise: { label: 'Raise', color: 'bg-accent-purple', hoverColor: 'hover:bg-purple-500', icon: TrendingUp, textColor: 'text-white' },
+  raiseBig: { label: 'Raise Big', color: 'bg-amber-600', hoverColor: 'hover:bg-amber-500', icon: TrendingUp, textColor: 'text-white' },
 };
 
-export default function ActionBar({ actions, onAction, disabled, potSize }) {
-  const availableActions = actions
-    .filter(a => a.frequency > 0 || a.action === 'check' || a.action === 'fold')
-    .map(a => ({
-      ...a,
-      ...(ACTION_CONFIG[a.action] || ACTION_CONFIG.check),
-    }));
-
-  // Always include fold if not already present
-  const hasCheck = availableActions.some(a => a.action === 'check');
-  const hasFold = availableActions.some(a => a.action === 'fold');
-
-  const displayActions = [];
-  if (!hasFold) displayActions.push({ action: 'fold', frequency: 0, ev: 0, ...ACTION_CONFIG.fold });
-  displayActions.push(...availableActions);
+export default function ActionBar({ actions, onAction, disabled, potSize, facingBet }) {
+  // Show every action the strategy defines, including the 0%-frequency ones —
+  // choosing a "never" line is exactly the mistake worth learning from, and it
+  // is graded honestly because the strategy carries a real EV for it.
+  //
+  // What is *not* shown is a Fold button on a hand nobody has bet into. The
+  // previous version injected one unconditionally with a hardcoded EV of 0, so
+  // folding a spot worth +4.5 BB scored as a blunder and folding a spot worth
+  // +0.3 BB scored as perfect. Both were artefacts of the fake EV.
+  const displayActions = actions.map(a => ({
+    ...a,
+    ...(ACTION_CONFIG[a.action] || ACTION_CONFIG.check),
+    label: a.label || ACTION_CONFIG[a.action]?.label || a.action,
+  }));
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <div className="flex items-center justify-center gap-1 mb-3 text-sm text-gray-400">
+      <div className="flex items-center justify-center gap-2 mb-3 text-sm text-gray-400">
         <span>Pot:</span>
         <span className="text-gold font-semibold">{potSize?.toFixed(1)} BB</span>
+        {facingBet && (
+          <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-accent-red/15 border border-accent-red/30 text-red-300">
+            Facing {facingBet.toFixed(1)} BB
+          </span>
+        )}
       </div>
       <div className="flex gap-3 justify-center flex-wrap">
         {displayActions.map((a, i) => {

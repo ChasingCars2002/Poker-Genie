@@ -38,10 +38,6 @@ function diverseSuits(count, rng) {
   return result;
 }
 
-function lowRanks(excludeAbove, rng) {
-  return RANKS.filter(r => rankValue(r) < excludeAbove);
-}
-
 function isConnected(r1, r2) {
   return Math.abs(rankValue(r1) - rankValue(r2)) <= 2;
 }

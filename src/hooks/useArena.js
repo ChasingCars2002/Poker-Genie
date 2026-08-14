@@ -1,12 +1,14 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { generateScenario, generateBossScenario } from '../engine/scenarioGenerator';
-import {
-  calculateEVLoss, classifyEVLoss, SCORE_CONFIG,
-  getLevelForXP, ACHIEVEMENTS,
-} from '../data/gtoData';
+import { gradeAction, SCORE_CONFIG, getLevelForXP } from '../data/gtoData';
+import { conceptsForScenario } from '../engine/conceptTagger';
+import { applyAnswer, applyStreak, applySessionStart, collectAchievements } from '../engine/sessionRecorder';
+import { updateProgress, getProgress } from '../state/progressStore';
+import { useProgress } from './useProgress';
 
-const STORAGE_KEY = 'poker-genie-progress';
 const HANDS_PER_FLOOR = 10;
+const MAX_LIVES = 5;
+const MAX_RUN_RESULTS = 200;
 
 const MULTIPLIER_TIERS = [
   { min: 0, max: 2, value: 1.0 },
@@ -22,12 +24,8 @@ function getMultiplier(streak) {
   return tier ? tier.value : 1.0;
 }
 
-function getMultiplierTierIndex(streak) {
-  return MULTIPLIER_TIERS.findIndex(t => streak >= t.min && streak <= t.max);
-}
-
 function dropMultiplierOneTier(streak) {
-  const currentIdx = getMultiplierTierIndex(streak);
+  const currentIdx = MULTIPLIER_TIERS.findIndex(t => streak >= t.min && streak <= t.max);
   if (currentIdx <= 0) return 0;
   return MULTIPLIER_TIERS[currentIdx - 1].min;
 }
@@ -39,28 +37,8 @@ function getDifficultyForFloor(floor) {
   return { min: 7, max: 10 };
 }
 
-function loadProgress() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch {}
-  return {
-    xp: 0, totalHands: 0, totalCorrect: 0, bestStreak: 0,
-    handsWithoutBlunder: 0, perfectDrill: false,
-    drillsAttempted: 0, drillsCompleted: {},
-    exploitWins: 0, unlockedAchievements: [],
-    bestArenaFloor: 0, bestArenaScore: 0, arenaBossesDefeated: 0,
-  };
-}
-
-function saveProgress(progress) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); } catch {}
-}
-
 function generateNextScenario(floor, handOnFloor, consecutiveCorrect, justLostLife) {
-  const isBoss = handOnFloor >= HANDS_PER_FLOOR;
-
-  if (isBoss) {
+  if (handOnFloor >= HANDS_PER_FLOOR) {
     return { scenario: generateBossScenario(floor), isBoss: true };
   }
 
@@ -70,10 +48,17 @@ function generateNextScenario(floor, handOnFloor, consecutiveCorrect, justLostLi
   if (consecutiveCorrect >= 5) difficulty = Math.min(10, difficulty + 1);
   if (justLostLife) difficulty = Math.max(1, difficulty - 2);
 
-  return { scenario: generateScenario(difficulty), isBoss: false };
+  // Arena difficulty is driven by the floor, but the review queue still
+  // applies — the concepts you keep missing should follow you into the run.
+  return {
+    scenario: generateScenario(difficulty, { concepts: getProgress().reviewQueue }),
+    isBoss: false,
+  };
 }
 
 export function useArena() {
+  const persisted = useProgress();
+
   const [lives, setLives] = useState(3);
   const [floor, setFloor] = useState(1);
   const [handOnFloor, setHandOnFloor] = useState(0);
@@ -88,77 +73,82 @@ export function useArena() {
   const [results, setResults] = useState([]);
   const [gameOver, setGameOver] = useState(false);
   const [justLostLife, setJustLostLife] = useState(false);
+  const [bossCleared, setBossCleared] = useState(false);
 
-  const [currentScenario, setCurrentScenario] = useState(null);
-  const [isBossHand, setIsBossHand] = useState(false);
+  // Generated in a lazy initialiser rather than a mount effect: setting state
+  // synchronously inside an effect renders the table once with no scenario and
+  // then immediately again with one.
+  // Records as they stood when this run began. The summary screen used to
+  // compare the finished run against the *already updated* stored bests with
+  // `>=`, so every single run was reported as a new personal best.
+  const [recordsAtRunStart, setRecordsAtRunStart] = useState(() => {
+    const p = getProgress();
+    return { floor: p.bestArenaFloor, score: p.bestArenaScore };
+  });
+
+  const [firstHand] = useState(() => generateNextScenario(1, 0, 0, false));
+  const [currentScenario, setCurrentScenario] = useState(firstHand.scenario);
+  const [isBossHand, setIsBossHand] = useState(firstHand.isBoss);
   const [feedback, setFeedback] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [scorePopup, setScorePopup] = useState(null);
-  const [progress, setProgress] = useState(loadProgress);
   const [newAchievements, setNewAchievements] = useState([]);
 
+  const popupTimer = useRef(null);
+
   const multiplier = useMemo(() => getMultiplier(consecutiveCorrect), [consecutiveCorrect]);
-  const levelInfo = useMemo(() => getLevelForXP(progress.xp), [progress.xp]);
+  const levelInfo = useMemo(() => getLevelForXP(persisted.xp), [persisted.xp]);
 
   useEffect(() => {
-    const { scenario, isBoss } = generateNextScenario(1, 0, 0, false);
-    setCurrentScenario(scenario);
-    setIsBossHand(isBoss);
+    updateProgress(p => applySessionStart(p));
+    return () => {
+      if (popupTimer.current) clearTimeout(popupTimer.current);
+    };
   }, []);
-
-  useEffect(() => {
-    const newlyUnlocked = ACHIEVEMENTS.filter(
-      a => !progress.unlockedAchievements.includes(a.id) && a.check(progress)
-    );
-    if (newlyUnlocked.length > 0) {
-      setNewAchievements(prev => [...prev, ...newlyUnlocked]);
-      setProgress(prev => {
-        const updated = {
-          ...prev,
-          unlockedAchievements: [...prev.unlockedAchievements, ...newlyUnlocked.map(a => a.id)],
-        };
-        saveProgress(updated);
-        return updated;
-      });
-    }
-  }, [progress.totalHands, progress.bestStreak, progress.handsWithoutBlunder,
-      progress.bestArenaFloor, progress.arenaBossesDefeated]);
 
   const handleAction = useCallback((chosenAction) => {
     if (!currentScenario || showFeedback || gameOver) return;
 
     const strategy = currentScenario.gtoStrategy;
-    const evLoss = calculateEVLoss(strategy, chosenAction);
-    const classification = classifyEVLoss(evLoss);
+    const { evLoss, classification } = gradeAction(strategy, chosenAction);
     const chosenActionData = strategy.actions.find(a => a.action === chosenAction);
-    const bestActionData = strategy.actions.reduce((best, a) => a.ev > best.ev ? a : best, strategy.actions[0]);
+    const bestActionData = strategy.actions.reduce(
+      (best, a) => (a.ev > best.ev ? a : best), strategy.actions[0]
+    );
 
     const isCorrect = classification.grade === 'perfect' || classification.grade === 'acceptable';
     const isBlunder = classification.grade === 'blunder';
     const isInaccuracy = classification.grade === 'inaccuracy';
     const scoreData = SCORE_CONFIG[classification.grade];
 
-    let newConsecutive = isCorrect ? consecutiveCorrect + 1 : (isInaccuracy ? dropMultiplierOneTier(consecutiveCorrect) : 0);
+    const newConsecutive = isCorrect
+      ? consecutiveCorrect + 1
+      : (isInaccuracy ? dropMultiplierOneTier(consecutiveCorrect) : 0);
     const currentMultiplier = getMultiplier(isCorrect ? newConsecutive : consecutiveCorrect);
     const points = Math.round(scoreData.points * (isBossHand ? 3 : 1) * currentMultiplier);
     const xp = Math.round(scoreData.xp * (isBossHand ? 2 : 1) * currentMultiplier);
 
     let newLives = lives;
-    let lostLife = false;
     let gainedLife = false;
 
     if (isBlunder) {
       newLives = lives - 1;
-      lostLife = true;
       setJustLostLife(true);
     } else {
       setJustLostLife(false);
     }
 
-    if (isCorrect && newConsecutive > 0 && newConsecutive % 5 === 0 && newLives < 5) {
-      newLives = newLives + 1;
+    if (isCorrect && newConsecutive > 0 && newConsecutive % 5 === 0 && newLives < MAX_LIVES) {
+      newLives += 1;
       gainedLife = true;
     }
+
+    // A boss only counts as beaten if it was actually played correctly. The
+    // previous version incremented on advancing past the hand, so blundering a
+    // boss and surviving on a spare life still logged a kill.
+    if (isBossHand) setBossCleared(isCorrect);
+
+    const concepts = currentScenario.concepts || conceptsForScenario(currentScenario);
 
     const result = {
       chosenAction,
@@ -169,6 +159,7 @@ export function useArena() {
       classification,
       strategy,
       scenario: currentScenario,
+      concepts,
       score: points,
       xpGained: xp,
       streak: newConsecutive,
@@ -179,51 +170,48 @@ export function useArena() {
     setFeedback(result);
     setShowFeedback(true);
     setScorePopup({
+      id: totalHandsPlayed + 1,
       points, xp, grade: classification.grade, streak: newConsecutive,
-      multiplier: currentMultiplier, lostLife, gainedLife, isBoss: isBossHand,
+      multiplier: currentMultiplier, lostLife: isBlunder, gainedLife, isBoss: isBossHand,
     });
-    setTimeout(() => setScorePopup(null), 2500);
+    if (popupTimer.current) clearTimeout(popupTimer.current);
+    popupTimer.current = setTimeout(() => setScorePopup(null), 2500);
 
     setConsecutiveCorrect(newConsecutive);
     setBestStreak(prev => Math.max(prev, newConsecutive));
     setRunScore(prev => prev + points);
     setXpEarned(prev => prev + xp);
     setTotalHandsPlayed(prev => prev + 1);
-    setResults(prev => [...prev, result]);
+    setResults(prev => [...prev, result].slice(-MAX_RUN_RESULTS));
     setLives(newLives);
+    if (isBlunder) setBlundersOnFloor(prev => prev + 1);
 
-    if (isBlunder) {
-      setBlundersOnFloor(prev => prev + 1);
-    }
+    const runOver = newLives <= 0;
+    if (runOver) setGameOver(true);
 
-    setProgress(prev => {
-      const updated = {
-        ...prev,
-        xp: prev.xp + xp,
-        totalHands: prev.totalHands + 1,
-        totalCorrect: prev.totalCorrect + (isCorrect ? 1 : 0),
-        bestStreak: Math.max(prev.bestStreak, newConsecutive),
-        handsWithoutBlunder: isBlunder ? 0 : prev.handsWithoutBlunder + 1,
-      };
-      saveProgress(updated);
-      return updated;
-    });
-
-    if (newLives <= 0) {
-      setGameOver(true);
-      setProgress(prev => {
-        const updated = {
-          ...prev,
-          bestArenaFloor: Math.max(prev.bestArenaFloor || 0, floor),
-          bestArenaScore: Math.max(prev.bestArenaScore || 0, runScore + points),
-          arenaBossesDefeated: (prev.arenaBossesDefeated || 0) + bossesDefeated,
-        };
-        saveProgress(updated);
-        return updated;
+    updateProgress(prev => {
+      let next = applyAnswer(prev, {
+        grade: classification.grade,
+        evLoss,
+        xp,
+        difficulty: currentScenario._meta?.difficulty ?? 5,
+        concepts,
       });
-    }
-  }, [currentScenario, showFeedback, gameOver, consecutiveCorrect, lives, isBossHand,
-      floor, runScore, bossesDefeated]);
+      next = applyStreak(next, newConsecutive);
+
+      if (runOver) {
+        next = {
+          ...next,
+          bestArenaFloor: Math.max(next.bestArenaFloor, floor),
+          bestArenaScore: Math.max(next.bestArenaScore, runScore + points),
+        };
+      }
+
+      const { unlocked, progress: withAchievements } = collectAchievements(next);
+      if (unlocked.length > 0) setNewAchievements(a => [...a, ...unlocked]);
+      return withAchievements;
+    });
+  }, [currentScenario, showFeedback, gameOver, consecutiveCorrect, lives, isBossHand, floor, runScore, totalHandsPlayed]);
 
   const nextHand = useCallback(() => {
     if (gameOver) return;
@@ -232,10 +220,18 @@ export function useArena() {
     let nextHandOnFloor = handOnFloor + 1;
 
     if (isBossHand) {
-      setBossesDefeated(prev => prev + 1);
+      if (bossCleared) {
+        setBossesDefeated(prev => prev + 1);
+        // Persist immediately rather than only at game over — quitting a run
+        // mid-way used to discard every boss kill in it.
+        updateProgress(prev => ({
+          ...prev,
+          arenaBossesDefeated: prev.arenaBossesDefeated + 1,
+        }));
+      }
 
-      if (blundersOnFloor === 0 && lives < 5) {
-        setLives(prev => Math.min(5, prev + 1));
+      if (blundersOnFloor === 0 && lives < MAX_LIVES) {
+        setLives(prev => Math.min(MAX_LIVES, prev + 1));
       }
 
       nextFloor = floor + 1;
@@ -243,6 +239,12 @@ export function useArena() {
       setFloor(nextFloor);
       setFloorsCleared(prev => prev + 1);
       setBlundersOnFloor(0);
+      setBossCleared(false);
+
+      updateProgress(prev => ({
+        ...prev,
+        bestArenaFloor: Math.max(prev.bestArenaFloor, nextFloor - 1),
+      }));
     }
 
     setHandOnFloor(nextHandOnFloor);
@@ -254,9 +256,11 @@ export function useArena() {
     setIsBossHand(isBoss);
     setShowFeedback(false);
     setFeedback(null);
-  }, [gameOver, floor, handOnFloor, isBossHand, consecutiveCorrect, justLostLife, blundersOnFloor, lives]);
+  }, [gameOver, floor, handOnFloor, isBossHand, bossCleared, consecutiveCorrect, justLostLife, blundersOnFloor, lives]);
 
   const restartArena = useCallback(() => {
+    const p = getProgress();
+    setRecordsAtRunStart({ floor: p.bestArenaFloor, score: p.bestArenaScore });
     setLives(3);
     setFloor(1);
     setHandOnFloor(0);
@@ -271,6 +275,7 @@ export function useArena() {
     setResults([]);
     setGameOver(false);
     setJustLostLife(false);
+    setBossCleared(false);
     setFeedback(null);
     setShowFeedback(false);
     setScorePopup(null);
@@ -303,7 +308,8 @@ export function useArena() {
     feedback,
     showFeedback,
     scorePopup,
-    progress,
+    progress: persisted,
+    recordsAtRunStart,
     levelInfo,
     newAchievements,
     handleAction,
@@ -311,5 +317,6 @@ export function useArena() {
     restartArena,
     dismissAchievement,
     handsPerFloor: HANDS_PER_FLOOR,
+    maxLives: MAX_LIVES,
   };
 }

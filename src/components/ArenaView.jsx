@@ -36,11 +36,13 @@ export default function ArenaView({ onBack }) {
     restartArena,
     dismissAchievement,
     handsPerFloor,
+    recordsAtRunStart,
   } = useArena();
 
   if (gameOver) {
     return (
       <RunSummary
+        recordsAtRunStart={recordsAtRunStart}
         stats={{
           floorsCleared,
           totalHandsPlayed,
