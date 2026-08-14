@@ -12,7 +12,7 @@ export default function TableView({ scenario, strategy, onAction, disabled }) {
     );
   }
 
-  const { board, heroHand, heroPosition, villainPosition, potSize, effectiveStack, street } = scenario;
+  const { board, heroHand, heroPosition, villainPosition, potSize, effectiveStack, street, facingBet } = scenario;
   const boardCards = board.flop ? [...board.flop, ...(board.turn ? [board.turn] : []), ...(board.river ? [board.river] : [])] : [];
 
   return (
@@ -44,7 +44,7 @@ export default function TableView({ scenario, strategy, onAction, disabled }) {
           </div>
           <div className="flex gap-2">
             {boardCards.map((card, i) => (
-              <Card key={card + i} card={card} size="lg" delay={i * 0.12} />
+              <Card key={card + i} card={card} size="lg" delay={i * 0.05} />
             ))}
             {/* Empty slots for turn/river */}
             {!board.turn && (
@@ -72,7 +72,7 @@ export default function TableView({ scenario, strategy, onAction, disabled }) {
         <div className="relative flex flex-col items-center">
           <div className="flex gap-2 mb-3">
             {heroHand.map((card, i) => (
-              <Card key={card} card={card} size="lg" delay={0.4 + i * 0.15} />
+              <Card key={card} card={card} size="lg" delay={0.1 + i * 0.05} />
             ))}
           </div>
           <motion.div
@@ -103,6 +103,7 @@ export default function TableView({ scenario, strategy, onAction, disabled }) {
           onAction={onAction}
           disabled={disabled}
           potSize={potSize}
+          facingBet={facingBet}
         />
       )}
     </div>

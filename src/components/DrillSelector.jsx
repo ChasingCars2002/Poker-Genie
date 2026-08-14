@@ -1,10 +1,16 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Target, Shield, Layers, ShieldAlert, Sparkles, ChevronRight,
   Flame, Zap, Users, Crosshair, Star, Trophy, Swords,
+  Infinity as InfinityIcon, LineChart, AlertTriangle,
 } from 'lucide-react';
-import { SCENARIOS, getLevelForXP, ACHIEVEMENTS } from '../data/gtoData';
+import { getLevelForXP, ACHIEVEMENTS } from '../data/gtoData';
+import { DRILL_PROFILES } from '../data/drillProfiles';
+import { conceptLabel } from '../data/concepts';
+import { getLeaks } from '../engine/masteryModel';
+import { weekOverWeek } from '../engine/weeklyStats';
+import { useProgress } from '../hooks/useProgress';
 import LevelBar from './LevelBar';
 
 const ICONS = {
@@ -24,20 +30,18 @@ const DIFFICULTY_COLORS = {
   Advanced: 'text-red-400 bg-red-400/10 border-red-400/20',
 };
 
-function loadProgress() {
-  try {
-    const saved = localStorage.getItem('poker-genie-progress');
-    if (saved) return JSON.parse(saved);
-  } catch {}
-  return { xp: 0, totalHands: 0, totalCorrect: 0, bestStreak: 0, unlockedAchievements: [], bestArenaFloor: 0, bestArenaScore: 0 };
-}
-
 export default function DrillSelector({ drills, onSelect }) {
-  const [progress] = useState(loadProgress);
+  // Reads the shared store rather than its own localStorage snapshot, so the
+  // numbers here reflect the session you just played.
+  const progress = useProgress();
+
   const levelInfo = getLevelForXP(progress.xp);
   const accuracy = progress.totalHands > 0
     ? Math.round((progress.totalCorrect / progress.totalHands) * 100)
     : 0;
+
+  const topLeak = useMemo(() => getLeaks(progress.concepts, 1)[0], [progress.concepts]);
+  const weekly = useMemo(() => weekOverWeek(progress.weeks), [progress.weeks]);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6">
@@ -96,6 +100,46 @@ export default function DrillSelector({ drills, onSelect }) {
           <span className="font-bold text-gold">{progress.unlockedAchievements?.length || 0}/{ACHIEVEMENTS.length}</span>
         </div>
       </motion.div>
+
+      {/* This week — the whole point of the app, so it goes above the fold */}
+      <motion.button
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.02 }}
+        whileHover={{ scale: 1.01 }}
+        whileTap={{ scale: 0.99 }}
+        onClick={() => onSelect('weekly')}
+        className="w-full max-w-2xl text-left bg-surface-800 hover:bg-surface-700 border border-white/5 hover:border-gold/30 rounded-2xl p-4 mb-4 transition-all cursor-pointer group"
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 rounded-lg bg-gold/10 shrink-0">
+              <LineChart size={18} className="text-gold" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-sm font-bold text-gray-100">This Week</h3>
+              <p className="text-xs text-gray-500 truncate">
+                {weekly.comparable
+                  ? `${Math.abs(weekly.deltas.evLossPerHand).toFixed(3)} BB/hand ${weekly.improved ? 'better' : 'worse'} than last week`
+                  : weekly.current
+                    ? `${weekly.current.hands} hands logged — ${weekly.handsNeeded} more to compare weeks`
+                    : 'Play a session to start tracking weekly progress'}
+              </p>
+            </div>
+          </div>
+          <ChevronRight size={16} className="text-gray-600 group-hover:text-gold group-hover:translate-x-1 transition-all shrink-0" />
+        </div>
+
+        {topLeak && (
+          <div className="mt-3 pt-3 border-t border-white/5 flex items-center gap-2">
+            <AlertTriangle size={12} className="text-amber-400 shrink-0" />
+            <span className="text-xs text-gray-400 truncate">
+              Biggest leak: <span className="text-amber-400 font-semibold">{conceptLabel(topLeak.conceptId)}</span>
+              <span className="text-gray-600"> · −{topLeak.evLossPerHand.toFixed(2)} BB/hand</span>
+            </span>
+          </div>
+        )}
+      </motion.button>
 
       {/* Arena Mode Card */}
       <div className="w-full max-w-2xl mb-4">
@@ -160,7 +204,7 @@ export default function DrillSelector({ drills, onSelect }) {
         {drills.map((drill, i) => {
           const Icon = ICONS[drill.icon] || Target;
           const diffClass = DIFFICULTY_COLORS[drill.difficulty] || DIFFICULTY_COLORS.Beginner;
-          const scenarioCount = (SCENARIOS[drill.id] || []).length;
+          const approximated = DRILL_PROFILES[drill.id]?.approximated;
 
           return (
             <motion.button
@@ -188,8 +232,11 @@ export default function DrillSelector({ drills, onSelect }) {
                 {drill.description}
               </p>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-600">
-                  {drill.heroPosition} vs {drill.villainPosition} • {scenarioCount} hands
+                <span className="text-xs text-gray-600 flex items-center gap-1.5">
+                  {drill.heroPosition} vs {drill.villainPosition}
+                  <span className="text-gray-700">•</span>
+                  <InfinityIcon size={11} className="text-gold/70" />
+                  {approximated ? 'endless (approximated)' : 'endless'}
                 </span>
                 <ChevronRight size={16} className="text-gray-600 group-hover:text-gold group-hover:translate-x-1 transition-all" />
               </div>
@@ -203,9 +250,12 @@ export default function DrillSelector({ drills, onSelect }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
-        className="mt-8 text-xs text-gray-600 text-center"
+        className="mt-8 text-xs text-gray-600 text-center max-w-md leading-relaxed"
       >
-        Strategies simplified to human-memorizable frequencies (0/25/50/75/100%)
+        Strategies simplified to human-memorizable frequencies (0/25/50/75/100%).
+        <br />
+        Heuristic model, not solver output — see the README before trusting a
+        close spot.
       </motion.p>
     </div>
   );

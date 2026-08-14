@@ -10,7 +10,11 @@ function getGrade(accuracy) {
   return { label: 'D', color: '#ef4444', message: 'Keep practicing — every expert was once a beginner.' };
 }
 
+// Enough to see the shape of the session without rendering a wall of tiles.
+const MAX_RESULT_TILES = 60;
+
 export default function SessionSummary({ stats, drillName, onReplay, onBack }) {
+  const recentResults = stats.results.slice(-MAX_RESULT_TILES);
   const accuracy = stats.handsPlayed > 0
     ? Math.round((stats.perfectPlays / stats.handsPlayed) * 100)
     : 0;
@@ -56,7 +60,7 @@ export default function SessionSummary({ stats, drillName, onReplay, onBack }) {
         transition={{ delay: 0.2 }}
         className="text-xl font-bold text-white mb-1"
       >
-        Drill Complete!
+        Session so far
       </motion.h2>
       <motion.p
         initial={{ opacity: 0 }}
@@ -106,21 +110,25 @@ export default function SessionSummary({ stats, drillName, onReplay, onBack }) {
           transition={{ delay: 0.8 }}
           className="w-full mb-8"
         >
-          <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Hand Results</h4>
+          <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+            Last {Math.min(stats.results.length, MAX_RESULT_TILES)} hands
+          </h4>
           <div className="flex flex-wrap gap-1.5">
-            {stats.results.map((r, i) => (
+            {recentResults.map((r, i) => (
               <motion.div
-                key={i}
+                key={r.id ?? i}
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ delay: 0.8 + i * 0.03, type: 'spring' }}
+                // Stagger is capped: sessions are endless now, and 200 tiles at
+                // 30ms each meant a six-second wait before the summary settled.
+                transition={{ delay: 0.8 + Math.min(i * 0.02, 0.8), type: 'spring' }}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold"
                 style={{
                   backgroundColor: r.classification.color + '20',
                   color: r.classification.color,
                   border: `1px solid ${r.classification.color}40`,
                 }}
-                title={`Hand ${i + 1}: ${r.classification.label} (EV Loss: ${r.evLoss} BB)`}
+                title={`${r.classification.label} — EV loss ${r.evLoss} BB`}
               >
                 {r.score > 0 ? r.score : '0'}
               </motion.div>
@@ -153,7 +161,7 @@ export default function SessionSummary({ stats, drillName, onReplay, onBack }) {
           className="flex items-center gap-2 bg-accent-blue hover:bg-blue-500 px-6 py-3 rounded-xl font-semibold text-sm transition-colors cursor-pointer"
         >
           <RotateCcw size={16} />
-          Play Again
+          Keep Playing
         </motion.button>
       </div>
     </motion.div>

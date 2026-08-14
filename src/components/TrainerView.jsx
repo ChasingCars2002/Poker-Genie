@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ArrowLeft, RotateCcw, Flame } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Flame, Infinity as InfinityIcon, FlagTriangleRight } from 'lucide-react';
 import TableView from './TableView';
 import StrategyFeedback from './StrategyFeedback';
 import StatsBar from './StatsBar';
@@ -21,25 +21,26 @@ export default function TrainerView({ drillId, onBack }) {
     stats,
     levelInfo,
     exploit,
-    drillComplete,
+    sessionEnded,
     scorePopup,
     newAchievements,
     handleAction,
     nextHand,
+    endSession,
+    resumeSession,
     resetDrill,
     toggleExploit,
     dismissAchievement,
-    scenarioCount,
-    currentIndex,
   } = useTrainer(drillId);
 
-  // Session Summary screen
-  if (drillComplete) {
+  // The drill no longer ends on its own — this shows when the player asks for
+  // it, and playing on is one click away.
+  if (sessionEnded) {
     return (
       <SessionSummary
         stats={stats}
         drillName={drill?.name || 'Drill'}
-        onReplay={resetDrill}
+        onReplay={resumeSession}
         onBack={onBack}
       />
     );
@@ -69,19 +70,33 @@ export default function TrainerView({ drillId, onBack }) {
         </motion.button>
         <div className="text-center">
           <h2 className="text-lg font-bold text-white">{drill?.name}</h2>
-          <p className="text-xs text-gray-500">
-            Hand {currentIndex + 1} / {scenarioCount}
+          <p className="text-xs text-gray-500 flex items-center justify-center gap-1.5">
+            <InfinityIcon size={12} className="text-gold" />
+            Hand {stats.handsPlayed + 1} this session
           </p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={resetDrill}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm cursor-pointer"
-        >
-          <RotateCcw size={14} />
-          Reset
-        </motion.button>
+        <div className="flex items-center gap-3">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={endSession}
+            title="See how this session went — you can pick straight back up"
+            className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-sm cursor-pointer"
+          >
+            <FlagTriangleRight size={14} />
+            Summary
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={resetDrill}
+            title="Clear session stats and start fresh"
+            className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-sm cursor-pointer"
+          >
+            <RotateCcw size={14} />
+            Reset
+          </motion.button>
+        </div>
       </div>
 
       {/* Level Bar */}
@@ -129,7 +144,7 @@ export default function TrainerView({ drillId, onBack }) {
       {/* Feedback */}
       {showFeedback && (
         <div className="mb-6">
-          <StrategyFeedback feedback={feedback} onNext={nextHand} isLastHand={currentIndex + 1 >= scenarioCount} />
+          <StrategyFeedback feedback={feedback} onNext={nextHand} />
         </div>
       )}
     </div>

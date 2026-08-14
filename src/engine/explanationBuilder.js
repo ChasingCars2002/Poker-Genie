@@ -8,12 +8,6 @@ const RANK_NAMES = {
 
 const SUIT_NAMES = { 's': 'spades', 'h': 'hearts', 'd': 'diamonds', 'c': 'clubs' };
 
-function cardName(card) {
-  const rank = card.slice(0, -1);
-  const suit = card[card.length - 1];
-  return `${RANK_NAMES[rank] || rank} of ${SUIT_NAMES[suit] || suit}`;
-}
-
 function handName(hand) {
   const r1 = hand[0].slice(0, -1);
   const r2 = hand[1].slice(0, -1);

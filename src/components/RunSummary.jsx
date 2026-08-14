@@ -1,18 +1,13 @@
 import { motion } from 'framer-motion';
 import { Skull, Target, Flame, Trophy, Star, AlertTriangle, XCircle, TrendingUp, Swords, ArrowLeft, RotateCcw } from 'lucide-react';
 
-function loadProgress() {
-  try {
-    const saved = localStorage.getItem('poker-genie-progress');
-    if (saved) return JSON.parse(saved);
-  } catch {}
-  return {};
-}
-
-export default function RunSummary({ stats, onReplay, onBack }) {
-  const progress = loadProgress();
-  const isNewBestFloor = stats.floorsCleared >= (progress.bestArenaFloor || 0);
-  const isNewBestScore = stats.runScore >= (progress.bestArenaScore || 0);
+export default function RunSummary({ stats, recordsAtRunStart, onReplay, onBack }) {
+  // Compared against the records as they were when the run started, not
+  // against the store — by the time this screen renders, the store already
+  // includes this run's result.
+  const previousBest = recordsAtRunStart || { floor: 0, score: 0 };
+  const isNewBestFloor = stats.floorsCleared > previousBest.floor;
+  const isNewBestScore = stats.runScore > previousBest.score;
 
   const accuracy = stats.totalHandsPlayed > 0
     ? Math.round((stats.results.filter(r =>

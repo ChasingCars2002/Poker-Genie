@@ -121,13 +121,19 @@ export function generateDraw(board, drawType, usedCards, rng) {
 
     if (flushSuit) {
       const available = RANKS.filter(r => !used.has(cardStr(r, flushSuit)));
-      if (available.length >= 2) {
+      if (available.length >= 1) {
         const shuffled = shuffleArray(available, rng);
         const card1 = cardStr(shuffled[0], flushSuit);
-        const card2Suit = pickRandom(ALL_SUITS.filter(s => s !== flushSuit), rng);
-        const card2Rank = pickRandom(RANKS.filter(r => !used.has(cardStr(r, card2Suit)) && r !== shuffled[0]), rng);
-        const card2 = cardStr(card2Rank, card2Suit);
-        if (!used.has(card1) && !used.has(card2)) {
+
+        // Second card must be off-suit, or we would be dealing a made flush
+        // rather than a draw. Search every off-suit card instead of picking one
+        // suit up front — that pick could leave no legal rank, and the old code
+        // then built a card literally named "undefineds".
+        const offSuits = shuffleArray(ALL_SUITS.filter(s => s !== flushSuit), rng);
+        for (const suit of offSuits) {
+          const rank = RANKS.find(r => r !== shuffled[0] && !used.has(cardStr(r, suit)));
+          if (!rank) continue;
+          const card2 = cardStr(rank, suit);
           used.add(card1);
           used.add(card2);
           return { hand: [card1, card2], usedCards: used };
@@ -177,9 +183,11 @@ export function generateAir(board, usedCards, rng) {
   const cards = [];
   const shuffled = shuffleArray(lowRanks.length >= 2 ? lowRanks : RANKS.filter(r => !boardRanks.includes(r)), rng);
   for (const rank of shuffled) {
-    const suit = pickRandom(ALL_SUITS, rng);
-    const card = cardStr(rank, suit);
-    if (!used.has(card)) {
+    // Try every suit for this rank. Picking one suit at random and moving on
+    // when it collided used to discard perfectly legal ranks and drop us into
+    // the exhaustive fallback below far more often than necessary.
+    const card = findAvailableCard(rank, used, null, rng);
+    if (card) {
       cards.push(card);
       used.add(card);
       if (cards.length === 2) break;
@@ -200,6 +208,38 @@ export function generateAir(board, usedCards, rng) {
   }
 
   return { hand: cards, usedCards: used };
+}
+
+export function generateOvercards(board, usedCards, rng) {
+  const used = new Set(usedCards || []);
+  getAllBoardCards(board).forEach(c => used.add(c));
+
+  const boardRanks = getBoardRanks(board);
+  const highestBoardValue = Math.max(...boardRanks.map(r => rankValue(r)));
+
+  // Two cards above the board — the "overcards" category previously routed to
+  // generateAir, which deals *low* ranks, i.e. the opposite of what the
+  // template and its explanation text described.
+  const overRanks = RANKS.filter(r => rankValue(r) > highestBoardValue && !boardRanks.includes(r));
+  if (overRanks.length < 2) return generateAir(board, usedCards, rng);
+
+  const shuffled = shuffleArray(overRanks, rng);
+  const cards = [];
+  for (const rank of shuffled) {
+    const card = findAvailableCard(rank, used, null, rng);
+    if (card) {
+      cards.push(card);
+      used.add(card);
+      if (cards.length === 2) break;
+    }
+  }
+
+  if (cards.length < 2) return generateAir(board, usedCards, rng);
+
+  return {
+    hand: cards.sort((a, b) => rankValue(b.slice(0, -1)) - rankValue(a.slice(0, -1))),
+    usedCards: used,
+  };
 }
 
 export function generateMonster(board, usedCards, rng) {
@@ -231,6 +271,35 @@ export function generateMonster(board, usedCards, rng) {
   }
 
   return generateTopPair(board, usedCards, rng);
+}
+
+export function generateTwoPair(board, usedCards, rng) {
+  const used = new Set(usedCards || []);
+  getAllBoardCards(board).forEach(c => used.add(c));
+
+  // Two pair means pairing two *different* board ranks. The `two-pair`
+  // category used to fall through to generateMonster, which pairs a single
+  // rank twice — that is a set, and the explanation text said "two pair" over
+  // a board where the player was actually looking at trips.
+  const boardRanks = [...new Set(getBoardRanks(board))]
+    .sort((a, b) => rankValue(b) - rankValue(a));
+
+  if (boardRanks.length >= 2) {
+    // Prefer the top two ranks; that is the two pair worth playing for.
+    const [first, second] = boardRanks;
+    const card1 = findAvailableCard(first, used, null, rng);
+    if (card1) {
+      used.add(card1);
+      const card2 = findAvailableCard(second, used, null, rng);
+      if (card2) {
+        used.add(card2);
+        return { hand: [card1, card2], usedCards: used };
+      }
+      used.delete(card1);
+    }
+  }
+
+  return generateMonster(board, usedCards, rng);
 }
 
 export function generateMarginalHand(board, usedCards, rng) {
@@ -277,12 +346,14 @@ export function generateHandByCategory(category, board, usedCards, rng) {
     case 'gutshot':
       return generateDraw(board, 'gutshot', usedCards, rng);
     case 'air':
-    case 'overcards':
       return generateAir(board, usedCards, rng);
+    case 'overcards':
+      return generateOvercards(board, usedCards, rng);
     case 'monster':
     case 'set':
-    case 'two-pair':
       return generateMonster(board, usedCards, rng);
+    case 'two-pair':
+      return generateTwoPair(board, usedCards, rng);
     case 'marginal':
     case 'middle-pair':
     case 'weak-top-pair':

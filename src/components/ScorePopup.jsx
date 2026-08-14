@@ -17,12 +17,19 @@ export default function ScorePopup({ data }) {
   return (
     <AnimatePresence>
       <motion.div
-        key={data.points + '-' + data.xp + '-' + Math.random()}
+        // Keyed on the hand number supplied by the hook. This used to append
+        // Math.random(), which is an impure call during render — React may
+        // re-render for reasons unrelated to a new popup, and every one of
+        // those produced a fresh key and replayed the animation.
+        key={data.id ?? `${data.points}-${data.xp}`}
         initial={{ opacity: 0, y: 20, scale: 0.8 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -30, scale: 0.5 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        className="fixed top-24 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-1 pointer-events-none"
+        // Anchored to the top-right rather than the centre: at the centre it
+        // landed squarely on the board in Arena, hiding the flop behind the
+        // score readout for the two seconds after every action.
+        className="fixed top-4 right-4 z-50 flex flex-col items-end gap-1 pointer-events-none text-right"
       >
         {/* Points */}
         <motion.div
