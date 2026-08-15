@@ -103,6 +103,39 @@ export const DRILLS = [
     villainPosition: 'BB',
     potType: 'SRP',
   },
+  {
+    id: 'probe-bets',
+    name: 'Probe & Delayed C-Bet',
+    description: 'The flop checked through — someone\'s range is capped. Learn to attack it from both seats.',
+    category: 'Single Raised Pots',
+    difficulty: 'Intermediate',
+    icon: 'repeat',
+    heroPosition: 'BB',
+    villainPosition: 'BTN',
+    potType: 'SRP',
+  },
+  {
+    id: 'vs-checkraise',
+    name: 'Check-Raised!',
+    description: 'Your c-bet just got raised. Continue, fold, or fight back — without paying off or getting bullied.',
+    category: 'Aggression Response',
+    difficulty: 'Advanced',
+    icon: 'flame',
+    heroPosition: 'BTN',
+    villainPosition: 'BB',
+    potType: 'SRP',
+  },
+  {
+    id: 'facing-barrels',
+    name: 'Facing the Barrel',
+    description: 'You check-called the flop and the bets keep coming. Bluff-catching discipline on turns and rivers.',
+    category: 'Defense',
+    difficulty: 'Advanced',
+    icon: 'crosshair',
+    heroPosition: 'BB',
+    villainPosition: 'BTN',
+    potType: 'SRP',
+  },
 ];
 
 // Logic tags that explain solver reasoning
@@ -121,6 +154,8 @@ export const LOGIC_TAGS = {
   GIVE_UP: { label: 'Give Up', color: '#6b7280', description: 'No equity, no blockers — putting in money here just burns EV.' },
   PRICE_IN: { label: 'Priced In', color: '#0ea5e9', description: 'The bet is small enough that even marginal hands must continue.' },
   SEMI_BLUFF: { label: 'Semi-Bluff', color: '#fb923c', description: 'Raising with a draw — you win folds now or improve to the best hand later.' },
+  BLUFF_CATCHER: { label: 'Bluff Catcher', color: '#a3a3a3', description: 'Beats bluffs, loses to value — defend just often enough to keep villain honest.' },
+  CAPPED_RANGE: { label: 'Capped Range', color: '#14b8a6', description: 'Opponent\'s line rules out their strongest hands — attack the cap.' },
 };
 
 // ── Scenarios ──
@@ -133,6 +168,11 @@ const TURN_CONTEXT = 'You opened BTN, BB called. Your 1.8 BB flop c-bet got call
 const RIVER_CONTEXT = 'You bet the flop and barreled the turn — BB called both. BB checks the river.';
 const DEFENSE_CONTEXT = 'BTN opens 2.5 BB, you call in the BB. You check, BTN bets 1.8 BB (33% pot).';
 const THREEBET_CONTEXT = 'BTN opens 2.5 BB, you 3-bet to 11 BB from the BB, BTN calls. You act first.';
+const PROBE_BB_CONTEXT = 'BTN opened 2.5 BB, you called in the BB. The flop checked through. You\'re first to act on the turn.';
+const PROBE_BTN_CONTEXT = 'You opened BTN, BB called, and you checked back the flop. BB checks the turn to you.';
+const XR_CONTEXT = 'You opened BTN, BB called. You c-bet 1.8 BB on the flop — BB check-raises to 7.2 BB.';
+const FB_TURN_CONTEXT = 'BTN opened 2.5 BB, you called in the BB. You check-called a 1.8 BB flop c-bet. You check the turn and BTN barrels 6.8 BB (75% pot).';
+const FB_RIVER_CONTEXT = 'You check-called the flop c-bet and a 6.8 BB turn barrel. You check the river and BTN fires 17 BB (75% pot).';
 
 export const SCENARIOS = {
   'srp-cbet': [
@@ -348,7 +388,7 @@ export const SCENARIOS = {
         ],
         bestAction: 'call',
         logicTags: ['SEMI_BLUFF', 'BLUFF_CANDIDATE'],
-        explanation: '54s has a gutshot to the wheel (any 2) plus backdoor diamonds. It\'s close to indifferent between all three options — exactly the kind of hand GTO mixes. Calling realizes the draw cheaply, raising makes a fine semi-bluff against a range-betting BTN, and folding loses almost nothing.',
+        explanation: '54s has a gutshot to the wheel (any 2) plus a backdoor flush draw. It\'s close to indifferent between all three options — exactly the kind of hand GTO mixes. Calling realizes the draw cheaply, raising makes a fine semi-bluff against a range-betting BTN, and folding loses almost nothing.',
       },
     },
     {
@@ -544,7 +584,7 @@ export const SCENARIOS = {
         ],
         bestAction: 'bet75',
         logicTags: ['BLOCKER_BLUFF', 'SEMI_BLUFF'],
-        explanation: 'The third club is scary — but you hold the Ac, the key card. You block the nut flush, you can still make it on the river, and a big barrel puts every one-pair hand in a vise. Checking keeps A-high\'s showdown value. Both work; the Ac is what makes the aggressive line printable.',
+        explanation: 'The third flush card is scary — but you hold the nut-flush blocker, the key card. You block the nut flush, you can still make it on the river, and a big barrel puts every one-pair hand in a vise. Checking keeps A-high\'s showdown value. Both work; the blocker ace is what makes the aggressive line printable.',
       },
     },
     {
@@ -631,7 +671,7 @@ export const SCENARIOS = {
         ],
         bestAction: 'bet33',
         logicTags: ['EQUITY_DENIAL', 'BLUFF_CANDIDATE'],
-        explanation: 'Low boards miss both ranges, but your AK has the two best overcards plus backdoor hearts. A small c-bet folds out QT and JT type hands that share your situation, denies their equity, and keeps your overpairs and air balanced. Cheap, effective, hard to exploit.',
+        explanation: 'Low boards miss both ranges, but your AK has the two best overcards plus a backdoor flush draw. A small c-bet folds out QT and JT type hands that share your situation, denies their equity, and keeps your overpairs and air balanced. Cheap, effective, hard to exploit.',
       },
     },
     {
@@ -760,7 +800,7 @@ export const SCENARIOS = {
         ],
         bestAction: 'bet33',
         logicTags: ['THIN_VALUE', 'WAY_AHEAD_WAY_BEHIND'],
-        explanation: 'You rivered top set, but look at the board: QJ and 76 made straights on the flop, and the Ah completed the flush. Your set now beats one-pair hands and loses to everything that check-calls big. Bet small to get value from Tx/9x, or check back — bombing into this runout is value-owning yourself.',
+        explanation: 'You rivered top set, but look at the board: QJ and 76 made straights on the flop, and the river ace completed the flush. Your set now beats one-pair hands and loses to everything that check-calls big. Bet small to get value from Tx/9x, or check back — bombing into this runout is value-owning yourself.',
       },
     },
     {
@@ -802,7 +842,7 @@ export const SCENARIOS = {
         ],
         bestAction: 'bet75',
         logicTags: ['BLOCKER_BLUFF', 'BLUFF_CANDIDATE'],
-        explanation: 'You barreled the flush turn holding the Ac and bricked — but the blocker still does its job on the river: BB can never hold the nut flush, so their check-calls are weak flushes and one-pair hands under maximum pressure. A-high occasionally wins at showdown, which is why checking mixes in equally.',
+        explanation: 'You barreled the flush turn holding the nut-flush blocker and bricked — but the blocker still does its job on the river: BB can never hold the nut flush, so their check-calls are weak flushes and one-pair hands under maximum pressure. A-high occasionally wins at showdown, which is why checking mixes in equally.',
       },
     },
     {
@@ -847,7 +887,7 @@ export const SCENARIOS = {
         ],
         bestAction: 'bet33',
         logicTags: ['NUT_ADVANTAGE', 'BOARD_COVERAGE'],
-        explanation: 'Overpair plus the nut flush draw — the dream holding on a monotone board. Small is still the right size: monotone boards favor small bets across your whole range because made flushes are already in BB\'s range and big bets only get action from them. With the Ah, you have the nut redraw even when called by a flush.',
+        explanation: 'Overpair plus the nut flush draw — the dream holding on a monotone board. Small is still the right size: monotone boards favor small bets across your whole range because made flushes are already in BB\'s range and big bets only get action from them. Holding the nut-suit ace, you have the nut redraw even when called by a flush.',
       },
     },
     {
@@ -868,7 +908,7 @@ export const SCENARIOS = {
         ],
         bestAction: 'check',
         logicTags: ['POT_CONTROL', 'WAY_AHEAD_WAY_BEHIND'],
-        explanation: 'KK with no heart is a bluff-catcher dressed as an overpair. Any heart among BB\'s ~20% flush combos has you drawing nearly dead, and a fourth heart kills your action either way. Check back, keep the pot small, and re-evaluate turns. The naked overpair and the overpair with a redraw are different hands — play them differently.',
+        explanation: 'KK with no card of the flush suit is a bluff-catcher dressed as an overpair. Any flush card among BB\'s ~20% flush combos has you drawing nearly dead, and a fourth flush card on the turn kills your action either way. Check back, keep the pot small, and re-evaluate turns. The naked overpair and the overpair with a redraw are different hands — play them differently.',
       },
     },
     {
@@ -889,7 +929,7 @@ export const SCENARIOS = {
         ],
         bestAction: 'bet33',
         logicTags: ['NUT_ADVANTAGE', 'EQUITY_DENIAL'],
-        explanation: 'A flopped queen-high flush is a strong made hand that hates free cards — a fourth heart frees BB to fold everything worse, and the Ah or Kh turn can even beat you. Bet now while worse flushes, sets, and big hearts pay. Slow-playing medium flushes on monotone boards is a classic EV leak.',
+        explanation: 'A flopped queen-high flush is a strong made hand that hates free cards — a fourth flush card frees BB to fold everything worse, and an ace or king of the suit on the turn can even beat you. Bet now while worse flushes, sets, and big flush-suit cards pay. Slow-playing medium flushes on monotone boards is a classic EV leak.',
       },
     },
     {
@@ -952,11 +992,586 @@ export const SCENARIOS = {
         ],
         bestAction: 'check',
         logicTags: ['POT_CONTROL', 'WAY_AHEAD_WAY_BEHIND'],
-        explanation: 'Top pair top kicker plus a royal gutshot sounds huge — but with no diamond, you\'re behind every flush, and the Ten that completes your broadway straight completes plenty of theirs. KQJ monotone is a "smallest pot possible" board for non-diamond hands. Check, bluff-catch, and let the Ad/Td turns make your decisions for you.',
+        explanation: 'Top pair top kicker plus a royal gutshot sounds huge — but with no card of the flush suit, you\'re behind every flush, and the Ten that completes your broadway straight completes plenty of theirs. KQJ monotone is a "smallest pot possible" board for hands without a flush card. Check, bluff-catch, and let the turn — a flush-suit ace or a Ten — make your decisions for you.',
       },
     },
   ],
 };
+
+SCENARIOS['probe-bets'] = [
+  {
+    id: 'probe-1',
+    context: PROBE_BB_CONTEXT,
+    board: { flop: ['Qs', '9h', '4d'], turn: '8c', river: null },
+    heroHand: ['Jd', '8d'],
+    heroPosition: 'BB',
+    villainPosition: 'BTN',
+    potSize: 5.5,
+    effectiveStack: 97.5,
+    street: 'turn',
+    gtoStrategy: {
+      actions: [
+        { action: 'check', frequency: 25, ev: 1.25 },
+        { action: 'bet33', label: 'Probe 33%', frequency: 75, ev: 1.3, size: 1.8 },
+        { action: 'bet75', label: 'Probe 75%', frequency: 0, ev: 0.9, size: 4.1 },
+      ],
+      bestAction: 'bet33',
+      logicTags: ['CAPPED_RANGE', 'THIN_VALUE'],
+      explanation: 'When BTN checks back the flop, their range is capped — no sets, no big Qx, or they\'d have bet. Your turned pair of eights plus a gutshot to the ten is plenty to probe small: weak hands fold, you set a cheap price with a vulnerable pair, and you still have outs when called. Checking lets a capped range realize equity for free.',
+    },
+  },
+  {
+    id: 'probe-2',
+    context: PROBE_BB_CONTEXT,
+    board: { flop: ['Ks', '7d', '2c'], turn: '6h', river: null },
+    heroHand: ['9c', '8c'],
+    heroPosition: 'BB',
+    villainPosition: 'BTN',
+    potSize: 5.5,
+    effectiveStack: 97.5,
+    street: 'turn',
+    gtoStrategy: {
+      actions: [
+        { action: 'check', frequency: 50, ev: 0.52 },
+        { action: 'bet33', label: 'Probe 33%', frequency: 0, ev: 0.3, size: 1.8 },
+        { action: 'bet75', label: 'Probe 75%', frequency: 50, ev: 0.55, size: 4.1 },
+      ],
+      bestAction: 'bet75',
+      logicTags: ['CAPPED_RANGE', 'SEMI_BLUFF'],
+      explanation: 'The 6 turns 98 into an open-ended straight draw — eight clean outs into a range that just told you it has nothing strong. Probe big: a capped BTN folds a ton, and when called you have real equity plus a disguised monster when the straight arrives. The small size wastes the fold equity that makes this play print.',
+    },
+  },
+  {
+    id: 'probe-3',
+    context: PROBE_BB_CONTEXT,
+    board: { flop: ['As', '8h', '3c'], turn: 'Td', river: null },
+    heroHand: ['Ah', '5h'],
+    heroPosition: 'BB',
+    villainPosition: 'BTN',
+    potSize: 5.5,
+    effectiveStack: 97.5,
+    street: 'turn',
+    gtoStrategy: {
+      actions: [
+        { action: 'check', frequency: 25, ev: 1.75 },
+        { action: 'bet33', label: 'Probe 33%', frequency: 75, ev: 1.8, size: 1.8 },
+        { action: 'bet75', label: 'Probe 75%', frequency: 0, ev: 1.4, size: 4.1 },
+      ],
+      bestAction: 'bet33',
+      logicTags: ['THIN_VALUE', 'CAPPED_RANGE'],
+      explanation: 'BTN checking back an A-high flop almost never has a strong ace — your weak top pair is effectively the nuts against their capped range. But the kicker problem is real, so size down: 8x, pocket pairs, and Tx pay a small bet, while a big one only gets action from the rare slow-played monster. Thin value wants small sizes.',
+    },
+  },
+  {
+    id: 'probe-4',
+    context: PROBE_BB_CONTEXT,
+    board: { flop: ['Th', '9h', '8s'], turn: '3d', river: null },
+    heroHand: ['6d', '5d'],
+    heroPosition: 'BB',
+    villainPosition: 'BTN',
+    potSize: 5.5,
+    effectiveStack: 97.5,
+    street: 'turn',
+    gtoStrategy: {
+      actions: [
+        { action: 'check', frequency: 75, ev: -0.05 },
+        { action: 'bet33', label: 'Probe 33%', frequency: 0, ev: -0.35, size: 1.8 },
+        { action: 'bet75', label: 'Probe 75%', frequency: 25, ev: -0.07, size: 4.1 },
+      ],
+      bestAction: 'check',
+      logicTags: ['GIVE_UP', 'BLUFF_CANDIDATE'],
+      explanation: '65 has just a gutshot (the 7) on a board that smacks plenty of BTN\'s check-backs — T9, 8x, and pair-plus-draw hands check this flop often. Probe big occasionally as a semi-bluff, but mostly check: this board isn\'t as capped as it looks, and six-high has no showdown value to protect with a small bet.',
+    },
+  },
+  {
+    id: 'probe-5',
+    context: PROBE_BTN_CONTEXT,
+    board: { flop: ['Jc', '8c', '4s'], turn: '4d', river: null },
+    heroHand: ['Ah', 'Jd'],
+    heroPosition: 'BTN',
+    villainPosition: 'BB',
+    potSize: 5.5,
+    effectiveStack: 97.5,
+    street: 'turn',
+    gtoStrategy: {
+      actions: [
+        { action: 'check', frequency: 25, ev: 2.16 },
+        { action: 'bet33', label: 'Bet 33%', frequency: 75, ev: 2.2, size: 1.8 },
+        { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: 1.8, size: 4.1 },
+      ],
+      bestAction: 'bet33',
+      logicTags: ['THIN_VALUE', 'EQUITY_DENIAL'],
+      explanation: 'The classic delayed c-bet: you checked back top pair for pot control, the turn paired the bottom card (changing nothing), and now BB has checked twice — their range is weak and full of draws and 8x. Start the value engine with a small bet; two streets of small bets from Jx-with-ace-kicker beats one awkward big one.',
+    },
+  },
+  {
+    id: 'probe-6',
+    context: PROBE_BTN_CONTEXT,
+    board: { flop: ['7h', '6h', '5s'], turn: 'Qd', river: null },
+    heroHand: ['Ac', 'Kd'],
+    heroPosition: 'BTN',
+    villainPosition: 'BB',
+    potSize: 5.5,
+    effectiveStack: 97.5,
+    street: 'turn',
+    gtoStrategy: {
+      actions: [
+        { action: 'check', frequency: 50, ev: 0.58 },
+        { action: 'bet33', label: 'Bet 33%', frequency: 50, ev: 0.6, size: 1.8 },
+        { action: 'bet75', label: 'Bet 75%', frequency: 0, ev: 0.2, size: 4.1 },
+      ],
+      bestAction: 'bet33',
+      logicTags: ['BLUFF_CANDIDATE', 'EQUITY_DENIAL'],
+      explanation: 'You wisely checked back AK on the 765 flop — and the queen is a fine card to take a delayed stab on: it favors your range, BB has shown no interest, and your small bet folds out the 8-high and 9-high hands that beat you unimproved. Checking again to showdown ace-high is the other half of the mix. Big bets still make no sense on BB\'s board.',
+    },
+  },
+  {
+    id: 'probe-7',
+    context: PROBE_BTN_CONTEXT,
+    board: { flop: ['Kd', '8s', '3h'], turn: '8h', river: null },
+    heroHand: ['Ad', '8c'],
+    heroPosition: 'BTN',
+    villainPosition: 'BB',
+    potSize: 5.5,
+    effectiveStack: 97.5,
+    street: 'turn',
+    gtoStrategy: {
+      actions: [
+        { action: 'check', frequency: 0, ev: 2.6 },
+        { action: 'bet33', label: 'Bet 33%', frequency: 50, ev: 3.0, size: 1.8 },
+        { action: 'bet75', label: 'Bet 75%', frequency: 50, ev: 2.98, size: 4.1 },
+      ],
+      bestAction: 'bet33',
+      logicTags: ['CAPPED_RANGE', 'THIN_VALUE'],
+      explanation: 'You checked back second pair and turned trips with the best kicker — against a BB who has now checked twice into you. Slow-playing again is the one mistake: BB\'s Kx and pocket pairs will pay bets, and the board has no draws to wait for. Either size works; what matters is starting to build the pot you\'re almost certainly winning.',
+    },
+  },
+  {
+    id: 'probe-8',
+    context: PROBE_BB_CONTEXT,
+    board: { flop: ['Kc', '9c', '5d'], turn: '2d', river: null },
+    heroHand: ['Qd', '9d'],
+    heroPosition: 'BB',
+    villainPosition: 'BTN',
+    potSize: 5.5,
+    effectiveStack: 97.5,
+    street: 'turn',
+    gtoStrategy: {
+      actions: [
+        { action: 'check', frequency: 25, ev: 1.4 },
+        { action: 'bet33', label: 'Probe 33%', frequency: 25, ev: 1.42, size: 1.8 },
+        { action: 'bet75', label: 'Probe 75%', frequency: 50, ev: 1.45, size: 4.1 },
+      ],
+      bestAction: 'bet75',
+      logicTags: ['SEMI_BLUFF', 'THIN_VALUE'],
+      explanation: 'Middle pair just picked up a flush draw — pair-plus-draw hands love betting into capped ranges because they win three ways: folds now, value from worse, or the flush on the river. The big probe pressures the Kx-light and A-high hands BTN checked back with. Pure checking wastes a hand this robust.',
+    },
+  },
+];
+
+SCENARIOS['vs-checkraise'] = [
+  {
+    id: 'xr-1',
+    context: XR_CONTEXT,
+    board: { flop: ['As', '8h', '3c'], turn: null, river: null },
+    heroHand: ['Ah', 'Kd'],
+    heroPosition: 'BTN',
+    villainPosition: 'BB',
+    potSize: 14.5,
+    effectiveStack: 95.7,
+    facingBet: 7.2,
+    facingLabel: 'Raises to 7.2 BB',
+    street: 'flop',
+    gtoStrategy: {
+      actions: [
+        { action: 'fold', label: 'Fold', frequency: 0, ev: 0 },
+        { action: 'call', label: 'Call', frequency: 75, ev: 3.2, size: 5.4 },
+        { action: 'raise', label: '3-bet to 18', frequency: 25, ev: 3.16, size: 18 },
+      ],
+      bestAction: 'call',
+      logicTags: ['BLUFF_CATCHER', 'POT_CONTROL'],
+      explanation: 'Top pair top kicker never folds to a flop check-raise — but it mostly just calls. BB\'s raising range here is polar: sets and two pairs you\'re behind, plus gutshots and air you crush. Calling keeps every bluff in and lets them keep barreling; 3-betting folds out exactly the hands paying you. A small 3-bet frequency protects you from being run over.',
+    },
+  },
+  {
+    id: 'xr-2',
+    context: XR_CONTEXT,
+    board: { flop: ['Ks', '7d', '2c'], turn: null, river: null },
+    heroHand: ['5d', '5c'],
+    heroPosition: 'BTN',
+    villainPosition: 'BB',
+    potSize: 14.5,
+    effectiveStack: 95.7,
+    facingBet: 7.2,
+    facingLabel: 'Raises to 7.2 BB',
+    street: 'flop',
+    gtoStrategy: {
+      actions: [
+        { action: 'fold', label: 'Fold', frequency: 75, ev: 0 },
+        { action: 'call', label: 'Call', frequency: 25, ev: 0.02, size: 5.4 },
+        { action: 'raise', label: '3-bet to 18', frequency: 0, ev: -1.5, size: 18 },
+      ],
+      bestAction: 'fold',
+      logicTags: ['GIVE_UP'],
+      explanation: 'You range-bet K72 with pocket fives — correct — and got raised. Now you\'re at the bottom of your betting range: two outs against value, and even their bluffs (gutshots, overcards) have live cards against you. This is exactly the hand a check-raise is designed to fold out. Pay it off occasionally to stay unexploitable, but mostly let it go.',
+    },
+  },
+  {
+    id: 'xr-3',
+    context: XR_CONTEXT,
+    board: { flop: ['Th', '9h', '8s'], turn: null, river: null },
+    heroHand: ['Ad', 'Ac'],
+    heroPosition: 'BTN',
+    villainPosition: 'BB',
+    potSize: 14.5,
+    effectiveStack: 95.7,
+    facingBet: 7.2,
+    facingLabel: 'Raises to 7.2 BB',
+    street: 'flop',
+    gtoStrategy: {
+      actions: [
+        { action: 'fold', label: 'Fold', frequency: 0, ev: 0 },
+        { action: 'call', label: 'Call', frequency: 50, ev: 3.75, size: 5.4 },
+        { action: 'raise', label: '3-bet to 18', frequency: 50, ev: 3.8, size: 18 },
+      ],
+      bestAction: 'raise',
+      logicTags: ['EQUITY_DENIAL', 'THIN_VALUE'],
+      explanation: 'An overpair on T98 facing a check-raise is a fight, not a fold — BB raises this board with a pile of pair-plus-draw and straight-draw combos you\'re ahead of. 3-betting charges those draws the maximum while you\'re still best; calling keeps the pot manageable on a board where many turns hurt. Mix both. Folding aces here is unthinkable.',
+    },
+  },
+  {
+    id: 'xr-4',
+    context: XR_CONTEXT,
+    board: { flop: ['Jc', '8c', '4s'], turn: null, river: null },
+    heroHand: ['Kh', 'Qh'],
+    heroPosition: 'BTN',
+    villainPosition: 'BB',
+    potSize: 14.5,
+    effectiveStack: 95.7,
+    facingBet: 7.2,
+    facingLabel: 'Raises to 7.2 BB',
+    street: 'flop',
+    gtoStrategy: {
+      actions: [
+        { action: 'fold', label: 'Fold', frequency: 75, ev: 0 },
+        { action: 'call', label: 'Call', frequency: 25, ev: 0.02, size: 5.4 },
+        { action: 'raise', label: '3-bet to 18', frequency: 0, ev: -0.55, size: 18 },
+      ],
+      bestAction: 'fold',
+      logicTags: ['GIVE_UP', 'BLUFF_CANDIDATE'],
+      explanation: 'KQ-high was a fine cheap stab, but a check-raise changes the math: you have no pair, no made draw, and your overcard outs may be dominated or counterfeit. Peel occasionally when your backdoors are live, but mostly surrender — c-betting light only works if you can let hands like this go without drama when raised.',
+    },
+  },
+  {
+    id: 'xr-5',
+    context: XR_CONTEXT,
+    board: { flop: ['Qs', '9h', '4d'], turn: null, river: null },
+    heroHand: ['Ac', 'Kc'],
+    heroPosition: 'BTN',
+    villainPosition: 'BB',
+    potSize: 14.5,
+    effectiveStack: 95.7,
+    facingBet: 7.2,
+    facingLabel: 'Raises to 7.2 BB',
+    street: 'flop',
+    gtoStrategy: {
+      actions: [
+        { action: 'fold', label: 'Fold', frequency: 50, ev: 0 },
+        { action: 'call', label: 'Call', frequency: 50, ev: 0.03, size: 5.4 },
+        { action: 'raise', label: '3-bet to 18', frequency: 0, ev: -0.5, size: 18 },
+      ],
+      bestAction: 'call',
+      logicTags: ['BLUFF_CATCHER', 'PRICE_IN'],
+      explanation: 'AK-high facing a check-raise is genuinely close: you have six clean overcard outs and the best no-pair hand possible, but no draw to lean on. Calling once and re-evaluating the turn and folding now are worth the same — a true mixed spot. The clear error is 3-bet bluffing into a range that just told you it likes this board.',
+    },
+  },
+  {
+    id: 'xr-6',
+    context: XR_CONTEXT,
+    board: { flop: ['Kh', '7h', '2s'], turn: null, river: null },
+    heroHand: ['Ah', 'Th'],
+    heroPosition: 'BTN',
+    villainPosition: 'BB',
+    potSize: 14.5,
+    effectiveStack: 95.7,
+    facingBet: 7.2,
+    facingLabel: 'Raises to 7.2 BB',
+    street: 'flop',
+    gtoStrategy: {
+      actions: [
+        { action: 'fold', label: 'Fold', frequency: 0, ev: 0 },
+        { action: 'call', label: 'Call', frequency: 50, ev: 1.88, size: 5.4 },
+        { action: 'raise', label: '3-bet to 18', frequency: 50, ev: 1.9, size: 18 },
+      ],
+      bestAction: 'raise',
+      logicTags: ['SEMI_BLUFF', 'PRICE_IN'],
+      explanation: 'The nut flush draw with an overcard is the perfect hand to fight back with: around 12 outs, you block the nut flush they might be raising with, and 3-betting wins the pot three ways — folds now, the flush later, or an ace. Calling in position to realize equity cheaply is equally fine. Folding this much equity to one raise is the only blunder.',
+    },
+  },
+  {
+    id: 'xr-7',
+    context: XR_CONTEXT,
+    board: { flop: ['Ks', '7d', '2c'], turn: null, river: null },
+    heroHand: ['7h', '7c'],
+    heroPosition: 'BTN',
+    villainPosition: 'BB',
+    potSize: 14.5,
+    effectiveStack: 95.7,
+    facingBet: 7.2,
+    facingLabel: 'Raises to 7.2 BB',
+    street: 'flop',
+    gtoStrategy: {
+      actions: [
+        { action: 'fold', label: 'Fold', frequency: 0, ev: 0 },
+        { action: 'call', label: 'Call', frequency: 50, ev: 5.46, size: 5.4 },
+        { action: 'raise', label: '3-bet to 18', frequency: 50, ev: 5.5, size: 18 },
+      ],
+      bestAction: 'raise',
+      logicTags: ['NUT_ADVANTAGE', 'EQUITY_DENIAL'],
+      explanation: 'Middle set, and villain is building the pot for you. On a rainbow board with no draws, flat-calling to trap is tempting and totally fine — nothing scary arrives on most turns. But 3-betting now gets stacks moving while BB still likes their Kx or bluff, and there\'s no draw you fear giving a free card to... so both lines print. Just never fold the third-best hand possible.',
+    },
+  },
+  {
+    id: 'xr-8',
+    context: XR_CONTEXT,
+    board: { flop: ['Kc', '9c', '5d'], turn: null, river: null },
+    heroHand: ['Kd', 'Jd'],
+    heroPosition: 'BTN',
+    villainPosition: 'BB',
+    potSize: 14.5,
+    effectiveStack: 95.7,
+    facingBet: 7.2,
+    facingLabel: 'Raises to 7.2 BB',
+    street: 'flop',
+    gtoStrategy: {
+      actions: [
+        { action: 'fold', label: 'Fold', frequency: 25, ev: 0 },
+        { action: 'call', label: 'Call', frequency: 75, ev: 0.04, size: 5.4 },
+        { action: 'raise', label: '3-bet to 18', frequency: 0, ev: -0.6, size: 18 },
+      ],
+      bestAction: 'call',
+      logicTags: ['BLUFF_CATCHER', 'POT_CONTROL'],
+      explanation: 'Top pair, decent kicker, facing a raise on a flush-draw board: a textbook call-and-see. BB check-raises plenty of flush draws and pair-plus-draw combos here, so you\'re ahead of the raising range — but barely, and bad turns are everywhere. Call, keep the bluffs in, and make your real decision on the turn. 3-betting turns your bluff-catcher into a target.',
+    },
+  },
+];
+
+SCENARIOS['facing-barrels'] = [
+  {
+    id: 'fb-1',
+    context: FB_TURN_CONTEXT,
+    board: { flop: ['Ks', '7d', '2c'], turn: 'Ah', river: null },
+    heroHand: ['Kh', '9h'],
+    heroPosition: 'BB',
+    villainPosition: 'BTN',
+    potSize: 15.9,
+    effectiveStack: 95.7,
+    facingBet: 6.8,
+    facingLabel: 'Barrels 6.8 BB',
+    street: 'turn',
+    gtoStrategy: {
+      actions: [
+        { action: 'fold', label: 'Fold', frequency: 50, ev: 0 },
+        { action: 'call', label: 'Call', frequency: 50, ev: 0.03, size: 6.8 },
+        { action: 'raise', label: 'Raise to 20', frequency: 0, ev: -1.2, size: 20 },
+      ],
+      bestAction: 'call',
+      logicTags: ['BLUFF_CATCHER', 'WAY_AHEAD_WAY_BEHIND'],
+      explanation: 'The ace is the best barrel card in the deck for BTN, and your top pair just demoted itself to a bluff-catcher. At equilibrium you defend exactly enough to keep their bluffs indifferent — which means calling and folding K9 are worth the same here. What\'s never right is raising: every Ax calls, every bluff folds, and you\'ve set money on fire.',
+    },
+  },
+  {
+    id: 'fb-2',
+    context: FB_TURN_CONTEXT,
+    board: { flop: ['Qs', '9h', '4d'], turn: '2c', river: null },
+    heroHand: ['Ah', '9c'],
+    heroPosition: 'BB',
+    villainPosition: 'BTN',
+    potSize: 15.9,
+    effectiveStack: 95.7,
+    facingBet: 6.8,
+    facingLabel: 'Barrels 6.8 BB',
+    street: 'turn',
+    gtoStrategy: {
+      actions: [
+        { action: 'fold', label: 'Fold', frequency: 75, ev: 0 },
+        { action: 'call', label: 'Call', frequency: 25, ev: 0.02, size: 6.8 },
+        { action: 'raise', label: 'Raise to 20', frequency: 0, ev: -1.0, size: 20 },
+      ],
+      bestAction: 'fold',
+      logicTags: ['BLUFF_CATCHER', 'GIVE_UP'],
+      explanation: 'Second pair was a fine flop call, but a 75% turn barrel on a brick needs ~30% equity to continue, and BTN\'s double-barrel range is heavy on Qx and overpairs. Your ace kicker blocks AQ — their most common value barrel — which is what keeps the occasional call honest. Mostly, though, middle pair has done its job and can retire.',
+    },
+  },
+  {
+    id: 'fb-3',
+    context: FB_TURN_CONTEXT,
+    board: { flop: ['Th', '9h', '8s'], turn: '2d', river: null },
+    heroHand: ['Jc', '9d'],
+    heroPosition: 'BB',
+    villainPosition: 'BTN',
+    potSize: 15.9,
+    effectiveStack: 95.7,
+    facingBet: 6.8,
+    facingLabel: 'Barrels 6.8 BB',
+    street: 'turn',
+    gtoStrategy: {
+      actions: [
+        { action: 'fold', label: 'Fold', frequency: 0, ev: 0 },
+        { action: 'call', label: 'Call', frequency: 75, ev: 1.4, size: 6.8 },
+        { action: 'raise', label: 'Raise to 20', frequency: 25, ev: 1.36, size: 20 },
+      ],
+      bestAction: 'call',
+      logicTags: ['PRICE_IN', 'SEMI_BLUFF'],
+      explanation: 'Middle pair plus an open-ended straight draw is far too much hand to fold — you have ~12 outs against even their best hands, plus the pair might already be good. Calling in a controlled pot is standard; the occasional semi-bluff raise leverages all that equity when they\'re barreling overcards. The fold button might as well be greyed out.',
+    },
+  },
+  {
+    id: 'fb-4',
+    context: FB_TURN_CONTEXT,
+    board: { flop: ['As', '8h', '3c'], turn: '7c', river: null },
+    heroHand: ['8d', '7d'],
+    heroPosition: 'BB',
+    villainPosition: 'BTN',
+    potSize: 15.9,
+    effectiveStack: 95.7,
+    facingBet: 6.8,
+    facingLabel: 'Barrels 6.8 BB',
+    street: 'turn',
+    gtoStrategy: {
+      actions: [
+        { action: 'fold', label: 'Fold', frequency: 0, ev: 0 },
+        { action: 'call', label: 'Call', frequency: 50, ev: 2.46, size: 6.8 },
+        { action: 'raise', label: 'Raise to 20', frequency: 50, ev: 2.5, size: 20 },
+      ],
+      bestAction: 'raise',
+      logicTags: ['CHECK_RAISE_CANDIDATE', 'EQUITY_DENIAL'],
+      explanation: 'Your middle pair just turned into two pair — hidden, strong, and very vulnerable to counterfeiting (any 8, 3, or board-pairing river hurts). Raising now gets value from Ax while it still thinks it\'s good and protects against ugly rivers. Flatting to keep AK/AQ barreling the river is the trappy half of the mix. Just don\'t play it passively *and* slowly.',
+    },
+  },
+  {
+    id: 'fb-5',
+    context: FB_RIVER_CONTEXT,
+    board: { flop: ['Ks', '7d', '2c'], turn: 'Ah', river: '4s' },
+    heroHand: ['Kd', 'Jd'],
+    heroPosition: 'BB',
+    villainPosition: 'BTN',
+    potSize: 39.7,
+    effectiveStack: 88.9,
+    facingBet: 17,
+    facingLabel: 'Fires 17 BB',
+    street: 'river',
+    gtoStrategy: {
+      actions: [
+        { action: 'fold', label: 'Fold', frequency: 50, ev: 0 },
+        { action: 'call', label: 'Call', frequency: 50, ev: 0.03, size: 17 },
+        { action: 'raise', label: 'Raise to 45', frequency: 0, ev: -3.0, size: 45 },
+      ],
+      bestAction: 'call',
+      logicTags: ['BLUFF_CATCHER'],
+      explanation: 'The river math: 17 to win 39.7 means you need to be good ~30% of the time. KJ beats every busted draw and missed overcard line but loses to all the Ax that barreled — a pure bluff-catcher, indifferent by design. Pick your calls by blockers (you block KJ-type value, which helps) and accept that either decision is fine. Raising is the only way to lose money fast.',
+    },
+  },
+  {
+    id: 'fb-6',
+    context: FB_RIVER_CONTEXT,
+    board: { flop: ['Th', '9h', '8s'], turn: '2d', river: '6h' },
+    heroHand: ['As', 'Ts'],
+    heroPosition: 'BB',
+    villainPosition: 'BTN',
+    potSize: 39.7,
+    effectiveStack: 88.9,
+    facingBet: 17,
+    facingLabel: 'Fires 17 BB',
+    street: 'river',
+    gtoStrategy: {
+      actions: [
+        { action: 'fold', label: 'Fold', frequency: 75, ev: 0 },
+        { action: 'call', label: 'Call', frequency: 25, ev: 0.02, size: 17 },
+        { action: 'raise', label: 'Raise to 45', frequency: 0, ev: -2.5, size: 45 },
+      ],
+      bestAction: 'fold',
+      logicTags: ['BLUFF_CATCHER', 'GIVE_UP'],
+      explanation: 'Top pair top kicker, and yet — count the disasters: the river completed the flush, the 7 straights got there on the flop, and BTN is firing big into all of it. One pair on a board where every draw arrived is near the bottom of your check-call-call range. Defend your strongest combos occasionally; fold this one without ceremony.',
+    },
+  },
+  {
+    id: 'fb-7',
+    context: FB_TURN_CONTEXT,
+    board: { flop: ['Kc', '9c', '5d'], turn: '4c', river: null },
+    heroHand: ['Qc', '8c'],
+    heroPosition: 'BB',
+    villainPosition: 'BTN',
+    potSize: 15.9,
+    effectiveStack: 95.7,
+    facingBet: 6.8,
+    facingLabel: 'Barrels 6.8 BB',
+    street: 'turn',
+    gtoStrategy: {
+      actions: [
+        { action: 'fold', label: 'Fold', frequency: 0, ev: 0 },
+        { action: 'call', label: 'Call', frequency: 25, ev: 3.95, size: 6.8 },
+        { action: 'raise', label: 'Raise to 20', frequency: 75, ev: 4.0, size: 20 },
+      ],
+      bestAction: 'raise',
+      logicTags: ['THIN_VALUE', 'EQUITY_DENIAL'],
+      explanation: 'Your flop flush draw just got there, and BTN is still betting — raise now. Queen-high flushes are strong but not invincible: a fourth flush card kills your action (and can beat you), and a board pair brings full houses into play. Raising charges one-pair hands and the nut-flush-blocker bluffs while they\'re still committed. Slow-playing medium flushes is how you win small pots and lose big ones.',
+    },
+  },
+  {
+    id: 'fb-8',
+    context: FB_TURN_CONTEXT,
+    board: { flop: ['As', '8h', '3c'], turn: 'Kd', river: null },
+    heroHand: ['5d', '4d'],
+    heroPosition: 'BB',
+    villainPosition: 'BTN',
+    potSize: 15.9,
+    effectiveStack: 95.7,
+    facingBet: 6.8,
+    facingLabel: 'Barrels 6.8 BB',
+    street: 'turn',
+    gtoStrategy: {
+      actions: [
+        { action: 'fold', label: 'Fold', frequency: 75, ev: 0 },
+        { action: 'call', label: 'Call', frequency: 0, ev: -0.4, size: 6.8 },
+        { action: 'raise', label: 'Raise to 20', frequency: 25, ev: 0.02, size: 20 },
+      ],
+      bestAction: 'fold',
+      logicTags: ['SEMI_BLUFF', 'GIVE_UP'],
+      explanation: 'Here\'s a spot where calling — the "compromise" option — is the only real mistake. Your wheel gutshot gets terrible odds against a 75% barrel and can\'t win unimproved, so peeling bleeds money. Folding is free; raising occasionally as a semi-bluff at least weaponizes the four outs and your opponent\'s scary-looking-but-thin range. When a hand can\'t call profitably, fold or fight.',
+    },
+  },
+];
+
+// ── Suit-isomorphic variation ──
+// Poker strategies are invariant under any permutation of the four suits:
+// remapping every card's suit (board + hero hand together) yields a
+// strategically identical spot with the same frequencies and EVs.
+// Ranks never change — that WOULD alter the strategy.
+
+const SUIT_LIST = ['s', 'h', 'd', 'c'];
+
+export function randomSuitPermutation() {
+  const shuffled = shuffle(SUIT_LIST);
+  const perm = {};
+  SUIT_LIST.forEach((suit, i) => { perm[suit] = shuffled[i]; });
+  return perm;
+}
+
+const permuteCard = (card, perm) => card[0] + perm[card[1]];
+
+export function permuteScenarioSuits(scenario, perm) {
+  const { board, heroHand } = scenario;
+  return {
+    ...scenario,
+    board: {
+      flop: board.flop.map(c => permuteCard(c, perm)),
+      turn: board.turn ? permuteCard(board.turn, perm) : null,
+      river: board.river ? permuteCard(board.river, perm) : null,
+    },
+    heroHand: heroHand.map(c => permuteCard(c, perm)),
+  };
+}
 
 // ── Grading ──
 // At equilibrium, every action played at positive frequency has equal EV.

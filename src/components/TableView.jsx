@@ -12,7 +12,7 @@ export default function TableView({ scenario, strategy, onAction, disabled }) {
     );
   }
 
-  const { board, heroHand, heroPosition, villainPosition, potSize, effectiveStack, street, context, facingBet } = scenario;
+  const { board, heroHand, heroPosition, villainPosition, potSize, effectiveStack, street, context, facingBet, facingLabel } = scenario;
   const boardCards = board.flop ? [...board.flop, ...(board.turn ? [board.turn] : []), ...(board.river ? [board.river] : [])] : [];
 
   return (
@@ -54,7 +54,7 @@ export default function TableView({ scenario, strategy, onAction, disabled }) {
               transition={{ delay: 0.4, type: 'spring', stiffness: 300 }}
               className="mt-3 bg-accent-red/20 border border-red-500/40 px-3 py-1 rounded-full"
             >
-              <span className="text-red-300 font-bold text-xs">Bets {facingBet.toFixed(1)} BB</span>
+              <span className="text-red-300 font-bold text-xs">{facingLabel || `Bets ${facingBet.toFixed(1)} BB`}</span>
             </motion.div>
           )}
         </div>
