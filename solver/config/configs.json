@@ -11,13 +11,53 @@
       "pot": 5.5,
       "effectiveStack": 97.5,
       "betSizes": {
-        "flop": { "ip": { "bet": [33, 75], "raise": [60] }, "oop": { "bet": [33, 75], "raise": [60] } },
-        "turn": { "ip": { "bet": [33, 75], "raise": [60] }, "oop": { "bet": [33, 75], "raise": [60] } },
-        "river": { "ip": { "bet": [33, 75], "raise": [60] }, "oop": { "bet": [33, 75], "raise": [60] } }
+        "flop": {
+          "ip": {
+            "bet": [
+              33,
+              75
+            ],
+            "raise": [
+              60
+            ]
+          },
+          "oop": {
+            "bet": [
+              33
+            ],
+            "raise": [
+              60
+            ]
+          }
+        },
+        "turn": {
+          "ip": {
+            "bet": [
+              66
+            ]
+          },
+          "oop": {
+            "bet": [
+              66
+            ]
+          }
+        },
+        "river": {
+          "ip": {
+            "bet": [
+              66
+            ]
+          },
+          "oop": {
+            "bet": [
+              66
+            ]
+          }
+        }
       },
       "allinThreshold": 0.67,
       "accuracy": 0.5,
-      "maxIteration": 200
+      "maxIteration": 80
     }
   ],
   "_note": "pot 5.5 = 2.5 open + 2.5 call + 0.5 dead SB. Stack 97.5 = 100 - 2.5."

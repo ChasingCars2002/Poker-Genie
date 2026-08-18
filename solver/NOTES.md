@@ -171,3 +171,31 @@ the solve and the extraction.
 323 KB for the flop street of an SPR-4 spot — matching the ~300 KB estimate and
 confirming that one-street dumps plus re-rooted turn/river solves is the right
 architecture.
+
+## 8. Tree size is bounded by RAM, not by patience
+
+The published 172s / 1600MB benchmark is for an **SPR 4** spot (pot 50, stack
+200). A 6-max 100bb single-raised pot is **SPR 17.7** (pot 5.5, stack 97.5),
+which is a far larger tree, and the difference is not a matter of waiting longer.
+
+Measured on a 16GB machine:
+
+| Tree | Outcome |
+|---|---|
+| 2 bet sizes + raise + allin on *all three* streets | **SIGKILL by the OOM killer at Iter 0** — exhausted ~15GB while building |
+| flop 2 sizes + raise, turn/river 1 size, no raises past flop | ~3.5GB and climbing during tree build |
+
+The failure mode is worth recognising: the process dies with **SIGKILL before
+the first iteration**, having printed only `Iter: 0`. That is the OOM killer, not
+the thread race from §2 (which segfaults, signal 11, and only with
+`set_thread_num > 1`). Distinguishing them matters — the fixes are opposite.
+
+**Design consequence:** the bet-size tree is the primary cost knob, ahead of
+`set_accuracy` and `maxIteration`. Spend branching where it teaches something
+(flop texture, where sizing choice is the actual lesson) and economise on later
+streets. Re-rooted turn and river solves get their detail back cheaply, because
+each starts from a narrow range at a much lower SPR.
+
+Budget from a measured pilot on your own hardware before committing to an
+overnight batch, and remember that N concurrent single-threaded processes need
+N× the peak RSS — four concurrent 3.5GB solves will not fit in 16GB.
