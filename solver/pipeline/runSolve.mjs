@@ -34,6 +34,8 @@ const resourcesDir = resolve(arg('resources', join(root, '.build/TexasSolver/res
 
 const { configs } = JSON.parse(readFileSync(join(root, 'config/configs.json'), 'utf8'));
 const config = configs.find((c) => c.id === configId);
+const iterationOverride = Number(arg('iterations', '0'));
+if (config && iterationOverride > 0) config.maxIteration = iterationOverride;
 if (!config) throw new Error(`no config ${configId}`);
 if (!existsSync(solverBin)) {
   throw new Error(`solver binary not found at ${solverBin} — run solver/build.sh first`);
@@ -103,8 +105,11 @@ console.log(`[${slug}] solved in ${elapsed}s, exploitability ${exploitability}%,
 
 // A dump that never converged is worse than no dump: it looks authoritative and
 // is not. Gate it here rather than discovering it in the trainer.
-const GATE = 1.0;
-if (exploitability > GATE) {
+// The pilot measures cost, not quality, so it needs to run short solves that
+// have not converged. Everything else keeps the gate: an under-converged dump
+// still looks authoritative, which makes shipping one worse than shipping none.
+const GATE = Number(arg('gate', '1.0'));
+if (Number.isFinite(GATE) && exploitability > GATE) {
   throw new Error(
     `exploitability ${exploitability}% exceeds ${GATE}% — raise maxIteration or lower accuracy in configs.json`,
   );

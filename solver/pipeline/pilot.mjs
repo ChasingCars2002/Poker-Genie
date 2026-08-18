@@ -30,6 +30,9 @@ const configId = arg('config', 'c0');
 // Default spread spans the complexity range: a dry rainbow board is the cheap
 // case, a monotone connected one the expensive case, and the solve cost between
 // them is not a small factor.
+// Short solves by default: the pilot is measuring peak memory and cost per
+// iteration, both of which are visible long before convergence.
+const iterations = arg('iterations', '12');
 const boards = arg('boards', 'Ks,7h,2c/9h,8h,7s/Ah,Kh,Qh')
   .split('/')
   .map((b) => b.trim())
@@ -41,7 +44,8 @@ for (const board of boards) {
     const stdout = execFileSync(
       process.execPath,
       ['--import', join(here, 'register.mjs'), join(here, 'runSolve.mjs'),
-       '--config', configId, '--board', board],
+       '--config', configId, '--board', board,
+       '--iterations', iterations, '--gate', 'off'],
       { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'inherit'] },
     );
     const line = stdout.split('\n').find((l) => l.includes('solved in')) ?? '';
@@ -59,7 +63,8 @@ for (const board of boards) {
 console.log(`\n=== pilot: config ${configId} ===`);
 for (const r of results) {
   if (!r.ok) { console.log(`  ${r.board.padEnd(12)} FAILED  ${r.reason}`); continue; }
-  console.log(`  ${r.board.padEnd(12)} ${String(r.seconds).padStart(7)}s  ${String(r.peakGB ?? '?').padStart(5)}GB  expl ${r.exploitability}%`);
+  const perIter = (r.seconds / Number(iterations)).toFixed(1);
+  console.log(`  ${r.board.padEnd(12)} ${String(r.seconds).padStart(7)}s  ${perIter}s/iter  ${String(r.peakGB ?? '?').padStart(5)}GB  expl ${r.exploitability}% after ${iterations}`);
 }
 
 const ok = results.filter((r) => r.ok);
@@ -69,6 +74,7 @@ if (ok.length === 0) {
 }
 
 const meanSeconds = ok.reduce((a, r) => a + r.seconds, 0) / ok.length;
+const meanPerIter = meanSeconds / Number(iterations);
 const maxGB = Math.max(...ok.map((r) => r.peakGB ?? 0));
 const totalRamGB = Number((readFileSync('/proc/meminfo', 'utf8').match(/MemTotal:\s+(\d+)/)?.[1] ?? 0)) / 1024 ** 2;
 // Leave a gigabyte of headroom: an OOM kill loses the whole solve, and a solve
@@ -77,8 +83,18 @@ const workers = maxGB > 0 ? Math.max(1, Math.floor((totalRamGB - 1) / maxGB)) : 
 
 console.log(`\nmean ${meanSeconds.toFixed(1)}s/solve, worst peak ${maxGB}GB, ${totalRamGB.toFixed(1)}GB total RAM`);
 console.log(`=> up to ${workers} concurrent single-threaded solve(s) fit in memory`);
-for (const n of [25, 100]) {
-  const hours = (meanSeconds * n) / workers / 3600;
-  console.log(`   ${String(n).padStart(3)} solves: ~${hours.toFixed(1)}h at ${workers} worker(s)`);
+// Exploitability decays roughly as C/T, so fit C from where this short run
+// landed and read off the iterations needed for a usable solve. It is a coarse
+// extrapolation from a short run — treat it as a planning figure, and rely on
+// the real gate in runSolve to reject anything that has not actually converged.
+const meanExpl = ok.reduce((a, r) => a + r.exploitability, 0) / ok.length;
+const fitC = meanExpl * Number(iterations);
+for (const target of [1.0, 0.5]) {
+  const itersNeeded = Math.ceil(fitC / target);
+  const perSolveH = (itersNeeded * meanPerIter) / 3600;
+  console.log(`\n  to reach ${target}% exploitability: ~${itersNeeded} iters, ~${perSolveH.toFixed(1)}h/solve`);
+  for (const n of [10, 25]) {
+    console.log(`     ${String(n).padStart(3)} flops: ~${((perSolveH * n) / workers).toFixed(1)}h at ${workers} worker(s)`);
+  }
 }
 console.log('\nMemory is the binding constraint, not time: every concurrent solve needs its own tree.');
