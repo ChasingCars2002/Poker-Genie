@@ -15,8 +15,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
-import { formatGB } from './measure.mjs';
+import { dirname, join } from 'node:path';
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
@@ -26,7 +25,6 @@ function arg(name, fallback) {
 }
 
 const here = dirname(new URL(import.meta.url).pathname);
-const root = resolve(here, '..');
 const configId = arg('config', 'c0');
 
 // Default spread spans the complexity range: a dry rainbow board is the cheap
