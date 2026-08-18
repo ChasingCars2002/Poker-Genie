@@ -8,7 +8,7 @@
 // races (see ../NOTES.md), so throughput comes from running several of these
 // concurrently — which also means a crash costs one flop, not the batch.
 
-import { execFileSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { buildInput, readRangeFile, toSolverRange } from './buildInput.mjs';
@@ -54,9 +54,38 @@ writeFileSync(inputPath, buildInput({ config, board, ipRange, oopRange, dumpPath
 console.log(`[${slug}] solving ${board.join(' ')} — pot ${config.pot}bb, stack ${config.effectiveStack}bb`);
 
 const started = Date.now();
-const stdout = execFileSync(solverBin, ['-i', inputPath, '-r', resourcesDir], {
-  encoding: 'utf8',
-  maxBuffer: 64 * 1024 * 1024,
+// Stream the solver's output as it goes rather than buffering it. A deep solve
+// runs for many minutes, and during a long batch you want to see convergence
+// progress rather than stare at a silent process wondering whether it hung.
+const stdout = await new Promise((resolveRun, rejectRun) => {
+  const child = spawn(solverBin, ['-i', inputPath, '-r', resourcesDir], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let captured = '';
+  const relay = (stream) => {
+    stream.setEncoding('utf8');
+    stream.on('data', (text) => {
+      captured += text;
+      process.stderr.write(text);
+    });
+  };
+  relay(child.stdout);
+  relay(child.stderr);
+  child.on('error', rejectRun);
+  child.on('close', (code, signal) => {
+    if (signal === 'SIGKILL') {
+      // Distinct from the thread race, which segfaults. SIGKILL with no
+      // iterations means the OOM killer took it while building the tree.
+      rejectRun(new Error(
+        `solver was SIGKILLed — almost certainly out of memory. Shrink the bet-size ` +
+        `tree in configs.json (it dominates cost), or use fewer concurrent solves.`,
+      ));
+    } else if (code !== 0) {
+      rejectRun(new Error(`solver exited ${code} (signal ${signal})`));
+    } else {
+      resolveRun(captured);
+    }
+  });
 });
 const elapsed = ((Date.now() - started) / 1000).toFixed(1);
 
