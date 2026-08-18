@@ -13,6 +13,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync } from 'no
 import { dirname, join, resolve } from 'node:path';
 import { buildInput, readRangeFile, toSolverRange } from './buildInput.mjs';
 import { extractDump } from './extract.mjs';
+import { trackPeakRss, formatGB } from './measure.mjs';
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
@@ -53,6 +54,7 @@ const inputPath = join(workDir, 'input.txt');
 writeFileSync(inputPath, buildInput({ config, board, ipRange, oopRange, dumpPath }));
 console.log(`[${slug}] solving ${board.join(' ')} — pot ${config.pot}bb, stack ${config.effectiveStack}bb`);
 
+let peakRss = 0;
 const started = Date.now();
 // Stream the solver's output as it goes rather than buffering it. A deep solve
 // runs for many minutes, and during a long batch you want to see convergence
@@ -61,6 +63,7 @@ const stdout = await new Promise((resolveRun, rejectRun) => {
   const child = spawn(solverBin, ['-i', inputPath, '-r', resourcesDir], {
     stdio: ['ignore', 'pipe', 'pipe'],
   });
+  const rss = trackPeakRss(child.pid);
   let captured = '';
   const relay = (stream) => {
     stream.setEncoding('utf8');
@@ -73,6 +76,7 @@ const stdout = await new Promise((resolveRun, rejectRun) => {
   relay(child.stderr);
   child.on('error', rejectRun);
   child.on('close', (code, signal) => {
+    peakRss = rss.stop();
     if (signal === 'SIGKILL') {
       // Distinct from the thread race, which segfaults. SIGKILL with no
       // iterations means the OOM killer took it while building the tree.
@@ -95,7 +99,7 @@ const exploitability = [...stdout.matchAll(/Total exploitability ([\d.]+) precen
   .pop();
 if (exploitability === undefined) throw new Error('could not parse exploitability from solver output');
 
-console.log(`[${slug}] solved in ${elapsed}s, exploitability ${exploitability}%`);
+console.log(`[${slug}] solved in ${elapsed}s, exploitability ${exploitability}%, peak RSS ${formatGB(peakRss)}`);
 
 // A dump that never converged is worse than no dump: it looks authoritative and
 // is not. Gate it here rather than discovering it in the trainer.
@@ -114,7 +118,13 @@ const chunk = {
   board,
   pot: config.pot,
   effectiveStack: config.effectiveStack,
-  solver: { exploitability, elapsedSeconds: Number(elapsed), accuracy: config.accuracy, maxIteration: config.maxIteration },
+  solver: {
+    exploitability,
+    elapsedSeconds: Number(elapsed),
+    peakRssBytes: peakRss,
+    accuracy: config.accuracy,
+    maxIteration: config.maxIteration,
+  },
   ranges: { ip: config.ipRangeFile, oop: config.oopRangeFile },
   evConvention: 'net chips relative to subgame start; fold = -(own pot contribution)',
   nodes,
