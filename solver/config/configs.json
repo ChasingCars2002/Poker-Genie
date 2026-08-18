@@ -1,0 +1,24 @@
+{
+  "configs": [
+    {
+      "id": "c0",
+      "label": "BTN vs BB, single raised pot",
+      "ipRangeFile": "btn-rfi-2.5x.range",
+      "oopRangeFile": "bb-call-vs-btn-2.5x.range",
+      "heroPosition": "BTN",
+      "villainPosition": "BB",
+      "potType": "SRP",
+      "pot": 5.5,
+      "effectiveStack": 97.5,
+      "betSizes": {
+        "flop": { "ip": { "bet": [33, 75], "raise": [60] }, "oop": { "bet": [33, 75], "raise": [60] } },
+        "turn": { "ip": { "bet": [33, 75], "raise": [60] }, "oop": { "bet": [33, 75], "raise": [60] } },
+        "river": { "ip": { "bet": [33, 75], "raise": [60] }, "oop": { "bet": [33, 75], "raise": [60] } }
+      },
+      "allinThreshold": 0.67,
+      "accuracy": 0.5,
+      "maxIteration": 200
+    }
+  ],
+  "_note": "pot 5.5 = 2.5 open + 2.5 call + 0.5 dead SB. Stack 97.5 = 100 - 2.5."
+}

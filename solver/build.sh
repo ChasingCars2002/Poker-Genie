@@ -32,6 +32,15 @@ git -C "$REPO" archive origin/master | tar x -C "$SRC"
 cp "$REPO/CMakeLists.txt" "$SRC/"
 cp -r "$REPO/ext" "$SRC/"
 
+# master's Dic5Compairer reads a compressed binary lookup table that the console
+# branch does not ship. Without it the solver aborts with "unable to load
+# compairer file" before solving anything. It is small (136KB) next to the 52MB
+# text table the console branch uses.
+echo "==> fetching master's binary compairer tables"
+for f in card5_dic_zipped.bin card5_dic_zipped_shortdeck.bin; do
+  git -C "$REPO" show "origin/master:resources/compairer/$f" > "$REPO/resources/compairer/$f"
+done
+
 echo "==> applying EV dump patch"
 git -C "$SRC" apply --unsafe-paths --directory="$SRC" "$ROOT/patches/0001-dump-evs.patch" 2>/dev/null \
   || patch -p1 -d "$SRC" < "$ROOT/patches/0001-dump-evs.patch"
