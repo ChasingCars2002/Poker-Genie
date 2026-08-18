@@ -100,7 +100,14 @@ export function loadChunk(path, { baseUrl = '/solver', fetchImpl = globalThis.fe
 
     await writeCache(db, path, chunk);
     return remember(path, chunk);
-  })().finally(() => inFlight.delete(path));
+  // Only clear the entry if it is still this request. Without the check, a
+  // request that was in flight when the cache was cleared would, on settling,
+  // delete a newer request registered under the same path — which then never
+  // gets deduped and, worse, leaves later callers waiting on a promise nothing
+  // will clean up.
+  })().finally(() => {
+    if (inFlight.get(path) === work) inFlight.delete(path);
+  });
 
   inFlight.set(path, work);
   return work;

@@ -78,3 +78,26 @@ describe('getNode', () => {
     expect(getNode(fixture, 'CHECK/BET 999')).toBeNull();
   });
 });
+
+describe('in-flight bookkeeping', () => {
+  it('does not let a settled request evict a newer one for the same path', async () => {
+    // Clearing the cache mid-flight used to make the older promise's cleanup
+    // delete the newer entry, breaking dedupe for everything after it.
+    let release;
+    const slow = new Promise((r) => { release = r; });
+    const first = vi.fn(async () => { await slow; return ok(fixture); });
+    const path = 'c0/As8h3c/flop.json';
+
+    const inflight = loadChunk(path, { fetchImpl: first });
+    clearMemoryCache();
+
+    const second = vi.fn(async () => ok(fixture));
+    const a = loadChunk(path, { fetchImpl: second });
+    release();
+    await inflight;
+
+    const b = loadChunk(path, { fetchImpl: second });
+    await Promise.all([a, b]);
+    expect(second).toHaveBeenCalledTimes(1);
+  });
+});
