@@ -199,3 +199,35 @@ each starts from a narrow range at a much lower SPR.
 Budget from a measured pilot on your own hardware before committing to an
 overnight batch, and remember that N concurrent single-threaded processes need
 N× the peak RSS — four concurrent 3.5GB solves will not fit in 16GB.
+
+## 9. Measured solve economics (the numbers to plan a batch from)
+
+Both measured on this 4-core / 16GB machine, single-threaded, `dump_rounds 1`,
+BTN vs BB 100bb. Convergence estimated by power-law fit over the solver's own
+checkpoints, warm-up dropped — see `pipeline/convergence.mjs`.
+
+| tree | iters to 1% | s/iter | h/solve | peak RSS | concurrent | 25 flops |
+|---|---|---|---|---|---|---|
+| one bet size per street | 217 | 11.8 | 0.7 | 2.8GB | 4 | **4.4h** |
+| two flop sizes + raise | 182 | 26.6 | 1.3 | 8.1GB | 1 | 33.6h |
+
+The surprise is that the richer tree converges in **fewer** iterations (fitted
+exponent 1.60 vs 1.44). More actions give CFR more ways to punish a bad
+strategy, so regret shrinks faster per pass. What makes it expensive is cost per
+iteration (2.3×) and, far more, peak memory: 8.1GB permits one solve at a time
+where 2.8GB permits four. The 7.6× wall-clock gap is mostly the worker count,
+not the mathematics.
+
+Memory is therefore the lever that matters. On a 32GB machine the two-size tree
+would run three-wide and drop to ~11h for 25 flops; on this box it does not.
+
+**Recommended shape — hybrid.** Breadth and sizing are separable goals, and they
+have very different prices:
+
+- 25 single-size flops for board coverage — **4.4h**
+- 8 two-size flops as a dedicated sizing drill — **10.8h**
+- **~15h total**, and the two halves can run on separate nights.
+
+A single-size tree still teaches bet-or-check, board texture, and defence
+frequencies; it just cannot ask "which size". Buying that one lesson across all
+25 boards costs 29 extra hours, and buying it on 8 well-chosen boards costs 11.
