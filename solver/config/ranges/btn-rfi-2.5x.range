@@ -1,0 +1,11 @@
+# BTN open-raise 2.5x, 6-max 100bb cash.
+#
+# PROVENANCE: this is a conventional, widely-taught opening range, not solver
+# output. TexasSolver is postflop-only, so preflop ranges are an *input
+# assumption* — every postflop solution below is exact GIVEN this range, which
+# is how all solver work operates. The app shows this range on screen as a
+# stated premise rather than hiding it.
+#
+# Aggregate: ~45% of combos.
+22+, A2s+, K5s+, Q7s+, J8s+, T8s+, 97s+, 86s+, 75s+, 64s+, 54s,
+A2o+, K9o+, Q9o+, J9o+, T9o

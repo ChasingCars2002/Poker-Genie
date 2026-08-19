@@ -1,0 +1,9 @@
+# BB flat-call vs a BTN 2.5x open, 6-max 100bb cash.
+#
+# PROVENANCE: conventional taught range, not solver output. See the note in
+# btn-rfi-2.5x.range. This is the CALLING range only — the BB 3-betting range
+# is a separate branch of the tree and is not part of a single-raised pot.
+#
+# Aggregate: ~38% of combos.
+22+, A2s+, K2s+, Q4s+, J6s+, T6s+, 96s+, 85s+, 74s+, 63s+, 53s+, 43s,
+A2o+, K7o+, Q8o+, J8o+, T8o+, 98o, 87o

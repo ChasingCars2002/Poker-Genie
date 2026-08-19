@@ -4,3 +4,9 @@ dist
 .env.local
 *.log
 .DS_Store
+
+# TexasSolver writes a JSON progress log to its working directory on every
+# solve, so this reappears whenever the pipeline runs. It is solver output,
+# not project state. (Note the key inside is spelled "exploitibility" — the
+# solver's typo, not ours.)
+tmp_log.txt
