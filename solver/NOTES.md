@@ -231,3 +231,21 @@ have very different prices:
 A single-size tree still teaches bet-or-check, board texture, and defence
 frequencies; it just cannot ask "which size". Buying that one lesson across all
 25 boards costs 29 extra hours, and buying it on 8 well-chosen boards costs 11.
+
+## 10. The solver writes a structured progress log
+
+Every solve drops `tmp_log.txt` into its working directory — undocumented, and
+gitignored here because it reappears on every run:
+
+```json
+{"exploitibility":7.416486740112305,"iteration":50,"time_ms":1261047}
+```
+
+It is a better convergence source than parsing stdout: structured, one record
+per checkpoint, and it carries `time_ms`, which gives exact seconds per
+iteration without dividing total wall time. `pipeline/convergence.mjs` currently
+parses stdout because that path was already proven; switching it to this file
+would remove the regex and give per-iteration timings for free.
+
+Note the misspelled key `exploitibility` — the solver's, and it must be matched
+exactly by anything reading the file.
